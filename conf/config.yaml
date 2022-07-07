@@ -26,4 +26,3 @@ checkpoint:
   monitor                 : "Reconstruction_Loss"
   save_last               : False
   save_on_train_epoch_end : True
-

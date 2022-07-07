@@ -1,8 +1,5 @@
-from importlib.resources import path
-import sys; import pathlib; p=pathlib.Path(); sys.path.append(str(p.parent.resolve()))
 import os
-import torch
-import torchinfo
+import sys; import pathlib; p=pathlib.Path(); sys.path.append(str(p.parent.resolve()))
 from model.ModelFactory import ModelFactory
 from datamodule.DataModuleFactory import DataModuleFactory
 import pytorch_lightning as pl
@@ -10,7 +7,6 @@ from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.utilities.seed import seed_everything
 from omegaconf import OmegaConf
-import pathlib
 
 
 class Train:
@@ -39,7 +35,6 @@ class Train:
 
         data = DataModuleFactory().create(**config.datamodule)
         trainer.fit(model=model, datamodule=data)
-
 
 
 if __name__ == '__main__':
