@@ -1,0 +1,5 @@
+name       : "MNIST"
+batch_size : 256
+shuffle    : False
+num_workers: 0
+pin_memory : False
