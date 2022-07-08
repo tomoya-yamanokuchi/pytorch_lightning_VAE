@@ -17,19 +17,12 @@ class Decoder(nn.Module):
                  **kwargs) -> None:
         super().__init__()
 
-        # Build Decoder
         modules = []
-        self.encoder_summary = encoder_summary
-
-        # reshape操作をできるレイヤーが存在しないためひとつなぎでnn.Sequentialで書けないので分けている
-        #（modulesのリストにappendはしていない）
-        # self.decoder_input = nn.Linear(latent_dim, np.prod(self.encoder_summary.summary_list[-1].output_size))
-
 
         modules.append(
             nn.Sequential(
-                nn.Linear(latent_dim, np.prod(self.encoder_summary.summary_list[-1].output_size)),
-                Reshape(-1, *self.encoder_summary.summary_list[-1].output_size[1:]),
+                nn.Linear(latent_dim, np.prod(encoder_summary.summary_list[-1].output_size)),
+                Reshape(-1, *encoder_summary.summary_list[-1].output_size[1:]),
             )
         )
 
@@ -73,7 +66,7 @@ class Decoder(nn.Module):
             )
         )
         self.decoder = nn.Sequential(*modules)
-        self.summary = torchinfo.summary(self.decoder, input_size=(1, 2))
+        self.summary = torchinfo.summary(self.decoder, input_size=(1, latent_dim))
 
 
 

@@ -1,8 +1,7 @@
-import sys; import pathlib; p=pathlib.Path(); sys.path.append(str(p.parent.resolve()))
 import os
+import sys; import pathlib; p=pathlib.Path(); sys.path.append(str(p.parent.resolve()))
 import numpy as np
-from turtle import color
-import matplotlib
+import torchinfo
 import torch
 from torchvision import utils
 from torch import Tensor
@@ -21,10 +20,7 @@ class LitVariationalAutoencoder(pl.LightningModule):
         self.save_hyperparameters()
         self.kld_weight = kld_weight
         self.model = VariationalAutoencoder(**kwargs)
-
-
-    def forward(self, x, **kwargs) -> Any:
-        return self.model.forward(x)
+        self.summary = torchinfo.summary(self.model, input_size=(1, 3, 64, 64))
 
 
     def configure_optimizers(self):
@@ -66,17 +62,21 @@ class LitVariationalAutoencoder(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         real_img, labels = batch
-        current_device = real_img.device
-        results     = self.model.forward(real_img)
-        recons      = results[0][0] # Size([dim_x])
-        input       = results[1][0] # Size([dim_x])
-        mu          = results[2]    # Size([num_batch, dim_z])
+        current_device   = real_img.device
+        results          = self.model.forward(real_img)
+        recon            = results[0] # Size([num_batch, channel, w, h])
+        input            = results[1] # Size([num_batch, channel, w, h])
+        mu               = results[2] # Size([num_batch, dim_z])
 
         if pathlib.Path(self.logger.log_dir).exists():
-            p = pathlib.Path(self.logger.log_dir + "/sample"); p.mkdir(parents=True, exist_ok=True)
+            p = pathlib.Path(self.logger.log_dir + "/reconstruction"); p.mkdir(parents=True, exist_ok=True)
+            save_num_recon = 10
             utils.save_image(
-                tensor = torch.cat([recons, input], dim=2),
-                fp     = os.path.join(str(p), 'sample_epoch' + str(self.current_epoch)) + '.png',
+                tensor = torch.cat([
+                    utils.make_grid(recon[:save_num_recon], nrow=save_num_recon),
+                    utils.make_grid(input[:save_num_recon], nrow=save_num_recon),
+                ], dim=1),
+                fp     = os.path.join(str(p), 'reconstruction_epoch' + str(self.current_epoch)) + '.png',
             )
 
             p = pathlib.Path(self.logger.log_dir + "/latentn_space"); p.mkdir(parents=True, exist_ok=True)
