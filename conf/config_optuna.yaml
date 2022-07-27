@@ -1,5 +1,20 @@
 defaults:
-  - model    : vae
+  - model                         : vae
+  - override hydra/sweeper        : optuna
+  - override hydra/sweeper/sampler: tpe
+
+hydra:
+  sweeper:
+    sampler:
+      seed: 123
+    direction: minimize
+    study_name: sphere
+    storage: null
+    n_trials: 20
+    n_jobs: 1
+    # search_space: ${search_spaces}
+    # params:
+    #   kld_weight: choice(0.0001, 0.001, 0.01)
 
 datamodule:
   name       : "mnist"
@@ -19,7 +34,7 @@ experiment:
 trainer:
   gpus                : [0]
   limit_train_batches : 100
-  max_epochs          : 10
+  max_epochs          : 2
 
 checkpoint:
   every_n_epochs          : 1
@@ -28,11 +43,3 @@ checkpoint:
   save_on_train_epoch_end : True
 
 
-raytune:
-  name            : "async_hyperband"
-  time_attr       : "training_iteration"
-  metric          : 'loss'
-  mode            : 'min'
-  max_t           : 1000
-  grace_period    : 5
-  reduction_factor: 2

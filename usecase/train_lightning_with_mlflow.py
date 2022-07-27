@@ -1,18 +1,20 @@
 import os
 import sys; import pathlib; p=pathlib.Path(); sys.path.append(str(p.parent.resolve()))
-from domain.model.ModelFactory import ModelFactory
-from domain.datamodule.DataModuleFactory import DataModuleFactory
+from model.ModelFactory import ModelFactory
+from datamodule.DataModuleFactory import DataModuleFactory
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.utilities.seed import seed_everything
 from omegaconf import OmegaConf
-
+import mlflow
 
 class Train:
     def run(self, config):
         seed = seed_everything(config.experiment.manual_seed, True)
         print("seed: ", seed)
+
+        mlflow.pytorch.autolog()
 
         model     = ModelFactory().create(**config.model)
         tb_logger = TensorBoardLogger(**config.logger)
@@ -34,7 +36,8 @@ class Train:
         )
 
         data = DataModuleFactory().create(**config.datamodule)
-        trainer.fit(model=model, datamodule=data)
+        with mlflow.start_run() as run:
+            trainer.fit(model=model, datamodule=data)
 
 
 if __name__ == '__main__':

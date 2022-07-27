@@ -68,6 +68,13 @@ class LitVariationalAutoencoder(pl.LightningModule):
         input            = results[1] # Size([num_batch, channel, w, h])
         mu               = results[2] # Size([num_batch, dim_z])
 
+        val_loss = self.model.loss_function(
+            *results,
+            M_N = self.kld_weight,
+            batch_idx = batch_idx
+        )
+        self.log("val_loss", val_loss["loss"])
+
         if pathlib.Path(self.logger.log_dir).exists():
             p = pathlib.Path(self.logger.log_dir + "/reconstruction"); p.mkdir(parents=True, exist_ok=True)
             save_num_recon = 10
