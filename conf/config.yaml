@@ -1,6 +1,7 @@
 defaults:
   - model    : vae
   - raytune  : async_with_optuna
+  - notify   : slack
 
 datamodule:
   name       : "mnist"
@@ -28,6 +29,3 @@ checkpoint:
   save_last               : False
   save_on_train_epoch_end : True
 
-notify_slack:
-  web_hook_url: "https://hooks.slack.com/services/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"
-  text        : "Process is finished [{:}] --> {:} (elapsed_time: {:})"

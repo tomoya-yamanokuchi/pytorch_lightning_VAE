@@ -1,0 +1,7 @@
+web_hook_url: "https://hooks.slack.com/services/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"
+text        : "Process is finished [{:}] --> {:} (elapsed_time: {:})"
+
+
+[filter "ignore_web_hook_url"]
+  smudge = cat
+  clean = sed '/^\\ *proxy/s!http://[^@]*!http://username:password!'
