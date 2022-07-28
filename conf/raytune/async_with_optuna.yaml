@@ -1,5 +1,5 @@
 general:
-  name               : "tune_END"
+  name               : "tune_POPO"
   num_samples        : 30
   fail_fast          : "raise"
   resources_per_trial: {'gpu': 1}
@@ -12,9 +12,9 @@ common:
 scheduler:
   name            : "async_hyperband"
   time_attr       : "training_iteration"
-  max_t           : 100
+  max_t           : 1000
   grace_period    : 5
-  reduction_factor: 4
+  reduction_factor: 2
 
 search_algorithm:
   name            : "optuna"

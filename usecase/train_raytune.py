@@ -1,4 +1,5 @@
 import os
+import time
 import hydra
 import sys; import pathlib; p=pathlib.Path(); sys.path.append(str(p.parent.resolve()))
 from omegaconf import DictConfig, OmegaConf
@@ -8,10 +9,13 @@ from ray.tune.integration.pytorch_lightning import TuneReportCallback
 from domain.raytune.SchedulerFactory import SchedulerFactory
 from domain.raytune.SearchAlgorithmFactory import SearchAlgorithmFactory
 from Training import Training
+from domain.notify.notify_slack import notify_slack
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="config")
 def get_config(cfg: DictConfig) -> None:
+    time_start = time.time()
+
     recursive_defaultdict = lambda: defaultdict(recursive_defaultdict)
     config                = recursive_defaultdict()
     config["model"]["kld_weight"] = tune.choice([1e-2, 1e-3, 1e-4])
@@ -40,6 +44,14 @@ def get_config(cfg: DictConfig) -> None:
         **cfg.raytune.general,
         **cfg.raytune.common,
     )
+    print("-------------------------------------------------------")
     print("Best hyperparameters found were: ", analysis.best_config)
+    print("                      Best loss: ", analysis.best_result["loss"])
+    print("                     Best trial: ", analysis.best_trial)
+    print("-------------------------------------------------------")
+
+    elapsed_time = time.time() - time_start
+    notify_slack(elapsed_time=elapsed_time, **cfg.notify_slack)
+
 
 get_config()
