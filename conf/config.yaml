@@ -1,5 +1,6 @@
 defaults:
   - model    : vae
+  - raytune  : async_with_optuna
 
 datamodule:
   name       : "mnist"
@@ -19,7 +20,7 @@ experiment:
 trainer:
   gpus                : [0]
   limit_train_batches : 100
-  max_epochs          : 10
+  max_epochs          : 30
 
 checkpoint:
   every_n_epochs          : 1
@@ -29,10 +30,22 @@ checkpoint:
 
 
 raytune:
-  name            : "async_hyperband"
-  time_attr       : "training_iteration"
-  metric          : 'loss'
-  mode            : 'min'
-  max_t           : 1000
-  grace_period    : 5
-  reduction_factor: 2
+  general:
+    name               : "tune_bbb"
+    num_samples        : 10
+    fail_fast          : "raise"
+    resources_per_trial: {'gpu': 1}
+  common:
+    metric : 'loss'
+    mode   : 'min'
+  scheduler:
+    name            : "async_hyperband"
+    time_attr       : "training_iteration"
+    max_t           : 1000
+    grace_period    : 5
+    reduction_factor: 2
+  search_algorithm:
+    name          : "optuna"
+    max_concurrent: 4
+
+

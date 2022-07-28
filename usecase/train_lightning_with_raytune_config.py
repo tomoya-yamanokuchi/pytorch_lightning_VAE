@@ -13,12 +13,11 @@ from domain.raytune.SchedulerFactory import SchedulerFactory
 from domain.raytune.SearchAlgorithmFactory import SearchAlgorithmFactory
 
 class Train:
-    def __init__(self, config):
-        self.config = config
+    # def __init__(self, config):
+    #     self.config = config
 
-
-    def run(self, config_raytune):
-        config = self.config
+    def run(self, config):
+        # config = self.config
         # config.trainer.max_epochs = config_raytune["max_epochs"]
         # config.model.kld_weight        = config_raytune["kld_weight"]
         # config.model.conv_out_channels = config_raytune["conv_out_channels"]
@@ -58,42 +57,22 @@ if __name__ == '__main__':
     import hydra
     from omegaconf import DictConfig, OmegaConf
     from ray import tune
-    from collections import defaultdict
+    from conf.Config import Config
 
-    @hydra.main(version_base=None, config_path="../conf", config_name="config")
-    def get_config(cfg: DictConfig) -> None:
-        train = Train(cfg)
+    base_config = OmegaConf.structured(Config)
+    cli_config  = OmegaConf.from_cli()
+    config      = OmegaConf.merge(base_config, cli_config)
 
-        recursive_defaultdict = lambda: defaultdict(recursive_defaultdict)
-        config = recursive_defaultdict()
-        config["model"]["kld_weight"] = tune.choice([1e-2, 1e-3, 1e-4])
-        config["model"]["conv_out_channels"] = tune.choice(
-            [
-                [32, 32, 32, 32],
-                [32, 64, 64, 64],
-                [32, 64, 128, 128],
-                [32, 64, 128, 64]
-            ]
-        )
+    scheduler  = SchedulerFactory().create(**config.raytune.scheduler)
+    # search_alg = SearchAlgorithmFactory().create(**cfg.raytune.search_algorithm, **cfg.raytune.common)
+    # search_alg = SearchAlgorithmFactory().create(**cfg.raytune.search_algorithm)
 
-        for key, val in config.items():
-            if isinstance(val, defaultdict):
-                for key_nest, val_nest in val.items():
-                    config[key][key_nest] = cfg[key][key_nest]
-            else:
-                config[key] = cfg[key]
-
-        scheduler  = SchedulerFactory().create(**cfg.raytune.scheduler)
-        # search_alg = SearchAlgorithmFactory().create(**cfg.raytune.search_algorithm, **cfg.raytune.common)
-        # search_alg = SearchAlgorithmFactory().create(**cfg.raytune.search_algorithm)
-
-        analysis = tune.run(train.run,
-            config     = config,
-            scheduler  = scheduler,
-            # search_alg = search_alg,
-            **cfg.raytune.general,
-            **cfg.raytune.common,
-        )
-        print("Best hyperparameters found were: ", analysis.best_config)
-
-    get_config()
+    train = Train()
+    analysis = tune.run(train.run,
+        config     = config,
+        scheduler  = scheduler,
+        # search_alg = search_alg,
+        **config.raytune.general,
+        **config.raytune.common,
+    )
+    print("Best hyperparameters found were: ", analysis.best_config)
