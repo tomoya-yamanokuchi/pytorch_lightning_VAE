@@ -1,6 +1,6 @@
 general:
   name               : "tune_POPO"
-  num_samples        : 30
+  num_samples        : 2
   fail_fast          : "raise"
   resources_per_trial: {'gpu': 1}
   verbose            : 3

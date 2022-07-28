@@ -8,8 +8,9 @@ from ray import tune
 from ray.tune.integration.pytorch_lightning import TuneReportCallback
 from domain.raytune.SchedulerFactory import SchedulerFactory
 from domain.raytune.SearchAlgorithmFactory import SearchAlgorithmFactory
+from domain.notify.Notifying import Notifying
 from Training import Training
-from domain.notify.notify_slack import notify_slack
+
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="config")
@@ -51,7 +52,9 @@ def get_config(cfg: DictConfig) -> None:
     print("-------------------------------------------------------")
 
     elapsed_time = time.time() - time_start
-    notify_slack(web_hook_url=cfg.notify.web_hook_url, elapsed_time=elapsed_time)
+    notifying    = Notifying(path_web_hook_url=cfg.notify.path_web_hook_url)
+    file_name    = __file__.split("/")[-1]
+    notifying.notify_slack(file_name, elapsed_time)
 
 
 get_config()
