@@ -24,11 +24,11 @@ def elapsed_time_str(seconds):
 
 
 
-def notify_slack(web_hook_url: str, text: str, elapsed_time=None):
+def notify_slack(web_hook_url: str, elapsed_time=None):
     assert type(web_hook_url) is str
-    assert type(text) is str
     slack               = slackweb.Slack(web_hook_url)
     file_name           = __file__.split("/")[-1]
     time                = datetime.datetime.now()
     elapsed_time_format = elapsed_time_str(elapsed_time)
+    text                = "Process is finished [{:}] --> {:} (elapsed_time: {:})"
     slack.notify(text=text.format(time, file_name, elapsed_time_format))

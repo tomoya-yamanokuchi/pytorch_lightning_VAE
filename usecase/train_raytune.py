@@ -51,7 +51,7 @@ def get_config(cfg: DictConfig) -> None:
     print("-------------------------------------------------------")
 
     elapsed_time = time.time() - time_start
-    notify_slack(elapsed_time=elapsed_time, **cfg.notify_slack)
+    notify_slack(web_hook_url=cfg.notify.web_hook_url, elapsed_time=elapsed_time)
 
 
 get_config()
