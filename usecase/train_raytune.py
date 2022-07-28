@@ -24,7 +24,12 @@ def get_config(cfg: DictConfig) -> None:
         ]
     )
 
-    train = Training(cfg)
+    metrics = {"loss": "loss"}
+
+    train = Training(
+        config              = cfg,
+        additionl_callbacks = [TuneReportCallback(metrics, on="validation_end")]
+    )
 
     scheduler  = SchedulerFactory().create(**cfg.raytune.scheduler)
     search_alg = SearchAlgorithmFactory().create(**cfg.raytune.search_algorithm, **cfg.raytune.common)

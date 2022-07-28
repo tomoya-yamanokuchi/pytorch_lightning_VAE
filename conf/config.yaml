@@ -27,25 +27,3 @@ checkpoint:
   monitor                 : "Reconstruction_Loss"
   save_last               : False
   save_on_train_epoch_end : True
-
-
-raytune:
-  general:
-    name               : "tune_bbb"
-    num_samples        : 10
-    fail_fast          : "raise"
-    resources_per_trial: {'gpu': 1}
-  common:
-    metric : 'loss'
-    mode   : 'min'
-  scheduler:
-    name            : "async_hyperband"
-    time_attr       : "training_iteration"
-    max_t           : 1000
-    grace_period    : 5
-    reduction_factor: 2
-  search_algorithm:
-    name          : "optuna"
-    max_concurrent: 4
-
-

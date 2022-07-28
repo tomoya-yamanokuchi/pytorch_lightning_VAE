@@ -12,8 +12,9 @@ from collections import defaultdict
 
 
 class Training:
-    def __init__(self, config):
-        self.config = config
+    def __init__(self, config, additionl_callbacks=[]):
+        self.config              = config
+        self.additionl_callbacks = additionl_callbacks
 
 
     def _override_config(self, config_raytune):
@@ -52,7 +53,7 @@ class Training:
                     filename = '{epoch}',
                     **config.checkpoint
                 )
-            ],
+            ] + self.additionl_callbacks,
             **config.trainer
         )
 

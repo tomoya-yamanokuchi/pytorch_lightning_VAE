@@ -1,0 +1,21 @@
+general:
+  name               : "tune_END"
+  num_samples        : 30
+  fail_fast          : "raise"
+  resources_per_trial: {'gpu': 1}
+  verbose            : 3
+
+common:
+  metric : 'loss'
+  mode   : 'min'
+
+scheduler:
+  name            : "async_hyperband"
+  time_attr       : "training_iteration"
+  max_t           : 100
+  grace_period    : 5
+  reduction_factor: 4
+
+search_algorithm:
+  name            : "optuna"
+  max_concurrent  : 4
