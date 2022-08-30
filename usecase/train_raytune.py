@@ -12,7 +12,6 @@ from domain.notify.Notifying import Notifying
 from Training import Training
 
 
-
 @hydra.main(version_base=None, config_path="../conf", config_name="config")
 def get_config(cfg: DictConfig) -> None:
     time_start = time.time()
