@@ -4,18 +4,18 @@ from torchvision import transforms
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader, random_split
 from typing import Optional
-from torchvision.datasets import MNIST
+from .Sprite import Sprite
 
 
-class MNISTDataModule(pl.LightningDataModule):
+class SpriteDataModule(pl.LightningDataModule):
     def __init__(self, data_dir: str = "./"):
         super().__init__()
         self.data_dir = data_dir
 
     def prepare_data(self):
         # download
-        MNIST(self.data_dir, train=True, download=True)
-        MNIST(self.data_dir, train=False, download=True)
+        Sprite(self.data_dir, train=True, download=True)
+        Sprite(self.data_dir, train=False, download=True)
 
     def setup(self, stage: Optional[str] = None):
 
@@ -59,4 +59,4 @@ class MNISTDataModule(pl.LightningDataModule):
 
 
 if __name__ == '__main__':
-    mnist = MNISTDataModule("./")
+    mnist = SpriteDataModule("./")
