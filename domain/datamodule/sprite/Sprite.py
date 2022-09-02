@@ -1,24 +1,30 @@
-import imp
-from black import main
 import cv2
 from torch.utils.data import Dataset
 from torchvision.datasets import VisionDataset
 import torch
 import os
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Callable
 
 
 class Sprite(VisionDataset):
     ''' Sprite Dataset
-        - sequence          : 6687
+        - sequence
+            - train: 6687
+            - test : 873
         - step              : 8
         - image size        : (3, 64, 64)
         - action variation  : 9
             - 歩いたり，手を振ったりなど
     '''
 
-    def __init__(self, img_dir):
+    def __init__(self,
+            img_dir  : str,
+            train    : bool,
+            transform: Optional[Callable] = None,
+        ):
+        self.train     = train
+        self.transform = transform
         self.img_paths = self._get_img_paths(img_dir)
 
 
@@ -26,8 +32,11 @@ class Sprite(VisionDataset):
         """
         指定したディレクトリ内の画像ファイルのパス一覧を取得する。
         """
+        if self.train: img_dir = img_dir + "/lpc-dataset/train/"
+        else         : img_dir = img_dir + "/lpc-dataset/test"
         img_dir = Path(img_dir)
         img_paths = [p for p in img_dir.iterdir() if p.suffix == ".sprite"]
+        # import ipdb; ipdb.set_trace()
         img_paths = self._paths_sorted(img_paths)
         return img_paths
 
@@ -44,7 +53,10 @@ class Sprite(VisionDataset):
 
     def __getitem__(self, index):
         path = self.img_paths[index]
-        return torch.load(str(path))
+        img  = torch.load(str(path))
+        if self.transform is not None:
+            img = self.transform(img)
+        return img
 
 
     def __len__(self):
@@ -57,8 +69,7 @@ if __name__ == '__main__':
     import numpy as np
     import cv2
 
-    img_dir = "data/Sprite/lpc-dataset/train/"
-    loader  = Sprite(img_dir)
+    loader  = Sprite("data/Sprite/", train=False, transform=np.fliplr)
 
     cv2.namedWindow('img', cv2.WINDOW_NORMAL)
     for i,dataitem in enumerate(loader):
@@ -72,3 +83,4 @@ if __name__ == '__main__':
             dt = np.transpose(d, (1, 2, 0))
             cv2.imshow("img", dt)
             cv2.waitKey(50)
+
