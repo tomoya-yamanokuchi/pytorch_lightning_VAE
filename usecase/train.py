@@ -4,8 +4,8 @@ from omegaconf import DictConfig, OmegaConf
 from Training import Training
 
 
-config_name = "config"
-# config_name = "config_dsvae"
+# config_name = "config"
+config_name = "config_dsvae"
 
 @hydra.main(version_base=None, config_path="../conf", config_name=config_name)
 def get_config(cfg: DictConfig) -> None:

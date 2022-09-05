@@ -16,6 +16,9 @@ class Sprite(VisionDataset):
         - image size        : (3, 64, 64)
         - action variation  : 9
             - 歩いたり，手を振ったりなど
+        - minmax value:
+            - min: -1.0
+            - max:  1.0
     '''
 
     def __init__(self,
@@ -54,6 +57,8 @@ class Sprite(VisionDataset):
     def __getitem__(self, index):
         path = self.img_paths[index]
         img  = torch.load(str(path))
+        # print("min: {} max: {}".format(img.min(), img.max()))
+        # import ipdb; ipdb.set_trace()
         if self.transform is not None:
             img = self.transform(img)
         return img
@@ -68,8 +73,9 @@ class Sprite(VisionDataset):
 if __name__ == '__main__':
     import numpy as np
     import cv2
+    from torchvision import transforms
 
-    loader  = Sprite("data/Sprite/", train=False, transform=np.fliplr)
+    loader  = Sprite("data/Sprite/", train=False, transform=transforms.ToTensor())
 
     cv2.namedWindow('img', cv2.WINDOW_NORMAL)
     for i,dataitem in enumerate(loader):

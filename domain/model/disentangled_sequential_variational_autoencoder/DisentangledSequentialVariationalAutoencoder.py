@@ -33,7 +33,8 @@ class DisentangledSequentialVariationalAutoencoder(nn.Module):
             lstm_hidden_dim = lstm_hidden_dim,
             context_dim     = context_dim
         )
-        torchinfo.summary(self.context, input_size=(1, conv_fc_out_dims[-1]))
+        # import ipdb; ipdb.set_trace()
+        torchinfo.summary(self.context, input_size=(128, 8, conv_fc_out_dims[-1]))
 
         # self.decoder = Decoder(self.encoder.summary, conv_out_channels, latent_dim)
 
