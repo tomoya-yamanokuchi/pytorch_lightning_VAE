@@ -1,9 +1,16 @@
 general:
   name               : "tune_mnist"
   num_samples        : 30
-  fail_fast          : "raise"
-  resources_per_trial: {'gpu': 1}
+  fail_fast          : True
+  resources_per_trial: {'gpu': 0.25}
+    # 小数点にすることで複数のtrial間でリソースを共有できる
+    # （並列計算数が多くなる？）
   verbose            : 3
+    # << Verbosity >>
+    #   0 = silent
+    #   1 = only status updates,
+    #   2 = status and brief trial results
+    #   3 = status and detailed trial results.
 
 common:
   metric : 'loss'
