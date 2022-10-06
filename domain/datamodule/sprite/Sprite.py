@@ -29,14 +29,15 @@ class Sprite(VisionDataset):
         self.train     = train
         self.transform = transform
         self.img_paths = self._get_img_paths(img_dir)
+        self.num_data  = len(self.img_paths)
 
 
     def _get_img_paths(self, img_dir):
         """
         指定したディレクトリ内の画像ファイルのパス一覧を取得する。
         """
-        if self.train: img_dir = img_dir + "/lpc-dataset/train/"
-        else         : img_dir = img_dir + "/lpc-dataset/test"
+        if self.train: img_dir = img_dir + "/Sprite/lpc-dataset/train/"
+        else         : img_dir = img_dir + "/Sprite/lpc-dataset/test"
         img_dir = Path(img_dir)
         img_paths = [p for p in img_dir.iterdir() if p.suffix == ".sprite"]
         # import ipdb; ipdb.set_trace()
@@ -54,13 +55,15 @@ class Sprite(VisionDataset):
         return sorted(paths, key = lambda x: int(x.stem))
 
 
-    def __getitem__(self, index):
-        path = self.img_paths[index]
-        img  = torch.load(str(path))
-        # print("min: {} max: {}".format(img.min(), img.max()))
+    def __getitem__(self, index: int):
+        path = self.img_paths[index] # Ex.) PosixPath('data/Sprite/lpc-dataset/train/1808.sprite')
+        img  = torch.load(str(path)) # img.shape = torch.Size([8, 3, 64, 64]) になるので１つのパスからロードしたデータに複数ステップ分が含まれている
+        # step, channel, width, height = img.shape
+        # print("min: {} max: {}".format(img.min(), img.max())) # max=1.0, min=-1.0
         # import ipdb; ipdb.set_trace()
-        if self.transform is not None:
-            img = self.transform(img)
+        # img_unrolled = img.view(-1, channel, width, height)
+        # if self.transform is not None:
+            # img = self.transform(img)
         return img
 
 

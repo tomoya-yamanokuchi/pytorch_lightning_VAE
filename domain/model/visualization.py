@@ -10,8 +10,10 @@ from matplotlib import ticker, cm
 def samples(data, label, save_path):
     if isinstance(data, Tensor):
         data = data.cpu().numpy()
-    if isinstance(label, Tensor):
-        label = label.cpu().numpy()
+
+    if label is not None:
+        if isinstance(label, Tensor):
+            label = label.cpu().numpy()
 
     plt.figure(figsize=(4, 4))
     plt.scatter(data[:, 0], data[:, 1], edgecolor="#333", c=label, cmap="jet")

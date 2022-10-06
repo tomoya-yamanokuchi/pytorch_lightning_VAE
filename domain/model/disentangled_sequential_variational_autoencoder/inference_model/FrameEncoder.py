@@ -45,14 +45,22 @@ class FrameEncoder(nn.Module):
         return
 
 
-    def forward(self,  input: Tensor) -> List[Tensor]:
-        """
+    def forward(self,  x: Tensor) -> List[Tensor]:
+        '''
         - param input: (Tensor) Input tensor to encoder [N x C x H x W]
         -      return: (Tensor) List of latent codes
-        """
-        result        = self.conv_out(input)                ;print(result.shape)
-        result        = torch.flatten(result, start_dim=1)  ;print(result.shape)
-        encoded_frame = self.conv_fc(result)                ;print(result.shape)
-        return encoded_frame
+        ---------------------------------------------------------------------
+        The frames are unrolled into the batch dimension for batch processing
+        such that x goes from [batch_size, frames, channels, size, size]
+                           to [batch_size * frames, channels, size, size]
+        '''
+        num_batch, step, channle, width, height = x.shape        # 入力データのshapeを取得
+        x = x.view(-1, channle, width, height)   # ;print(x.shape) # 最大で4次元データまでなのでreshapeする必要がある
+        x = self.conv_out(x)                     # ;print(x.shape) # 畳み込みレイヤで特徴量を取得
+        x = torch.flatten(x, start_dim=1)        # ;print(x.shape) # start_dim 以降の次元を flatten
+        x = self.conv_fc(x)                      # ;print(x.shape) # 全結合層で特徴量を抽出
+        x = x.view(num_batch, step, x.shape[-1]) # ;print(x.shape) # 形状をunrollしてたのを元に戻す(じゃないとLSTMとかに渡せない)
+        # import ipdb; ipdb.set_trace()
+        return x
 
 

@@ -1,5 +1,5 @@
 defaults:
-  - model    : dsvae
+  - model    : dsvae_lite
   - raytune  : async_with_optuna
   - notify   : slack
 
@@ -19,13 +19,12 @@ experiment:
   manual_seed: 1265
 
 trainer:
-  gpus                : [0]
+  gpus                : [1]
   limit_train_batches : 100
   max_epochs          : 30
 
 checkpoint:
   every_n_epochs          : 1
-  monitor                 : "Reconstruction_Loss"
+  monitor                 : "loss"
   save_last               : False
   save_on_train_epoch_end : True
-

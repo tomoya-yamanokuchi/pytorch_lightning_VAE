@@ -1,7 +1,7 @@
 from torch import nn
 
 class LinearUnit(nn.Module):
-    def __init__(self, in_dim, out_dim, ):
+    def __init__(self, in_dim, out_dim):
         super(LinearUnit, self).__init__()
         self.model = nn.Sequential(
             nn.Linear(in_dim, out_dim),

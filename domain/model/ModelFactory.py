@@ -3,6 +3,7 @@ from .disentangled_sequential_variational_autoencoder.LitDisentangledSequentialV
 
 class ModelFactory:
     def create(self, name: str, **kwargs):
-        if    name == "vae"      : return LitVariationalAutoencoder(**kwargs)
-        if    name == "dsvae"    : return LitDisentangledSequentialVariationalAutoencoder(**kwargs)
-        else                     : raise NotImplementedError()
+        prefix = name.split("_")[0]
+        if  prefix == "vae"  : return LitVariationalAutoencoder(**kwargs)
+        if  prefix == "dsvae": return LitDisentangledSequentialVariationalAutoencoder(**kwargs)
+        else                 : raise NotImplementedError()

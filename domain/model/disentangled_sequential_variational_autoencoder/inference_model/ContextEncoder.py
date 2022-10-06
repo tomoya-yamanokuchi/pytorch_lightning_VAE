@@ -5,7 +5,7 @@ from torch import nn
 from typing import List
 import numpy as np
 from custom_network_layer.LinearUnit import LinearUnit
-
+from custom_network_layer import reparameterize
 
 class ContextEncoder(nn.Module):
     def __init__(self,
@@ -14,38 +14,37 @@ class ContextEncoder(nn.Module):
                  context_dim      : int,
                  **kwargs) -> None:
         super().__init__()
+        self.lstm_hidden_dim = lstm_hidden_dim
         # ------------ LSTM ------------
         self.lstm_out = nn.LSTM(
             input_size    = in_dim,
             hidden_size   = lstm_hidden_dim,
             num_layers    = 1,
             bidirectional = True, # if True:  output dim is lstm_hidden_dim * 2
-            # batch_first   = True
+            batch_first   = True,
         )
-        self.summary = torchinfo.summary(self.lstm_out, input_size=(1, in_dim))
+        self.summary = torchinfo.summary(self.lstm_out, input_size=(131, in_dim))
         # ------------ fc layer ------------
-        self.context_mean   = nn.Linear(lstm_hidden_dim, context_dim)
-        self.context_logvar = nn.Linear(lstm_hidden_dim, context_dim)
+        self.context_mean   = LinearUnit(lstm_hidden_dim*2, context_dim)
+        self.context_logvar = LinearUnit(lstm_hidden_dim*2, context_dim)
         return
 
 
-    def forward(self,  input: Tensor) -> List[Tensor]:
-        """
-        - param input: (Tensor) (N, step, dim)
-        -      return: (Tensor) []
-        """
-        lstm_out, _  = self.lstm_out(input)
-        lstm_forward = lstm_out[:, :self.lstm_out.hidden_size]
-        lstm_reverse = lstm_out[:, self.lstm_out.hidden_size:]
-        import ipdb; ipdb.set_trace()
-        # The features of the last timestep of the forward RNN is stored at the end of lstm_out in the first half, and the features
-        # of the "first timestep" of the backward RNN is stored at the beginning of lstm_out in the second half
-        # For a detailed explanation, check: https://gist.github.com/ceshine/bed2dadca48fe4fe4b4600ccce2fd6e1
-        backward = lstm_out[:,               0, self.hidden_dim:2 * self.hidden_dim]
-        frontal  = lstm_out[:, self.frames - 1, 0:self.hidden_dim]
-        lstm_out = torch.cat((frontal, backward), dim=1)
-        mean = self.f_mean(lstm_out)
-        logvar = self.f_logvar(lstm_out)
-        return mean, logvar, self.reparameterize(mean, logvar, self.training)
-
-
+    def forward(self,  x: Tensor) -> List[Tensor]:
+        '''
+        num_batch, step, dim = lstm_out.shape
+        The features of the last timestep of the forward RNN is stored at the end of lstm_out in the first half, and the features
+        of the "first timestep" of the backward RNN is stored at the beginning of lstm_out in the second half
+        For a detailed explanation, check: https://gist.github.com/ceshine/bed2dadca48fe4fe4b4600ccce2fd6e1
+        '''
+        # num_batch, step, dim  = x.shape
+        lstm_out, _             = self.lstm_out(x)                                      # shape=[num_batch, step, lstm_hidden_dim*2]
+        forward_last_timestep   = lstm_out[:, -1, :self.lstm_hidden_dim]                # shape=[num_batch, lstm_hidden_dim]
+        backward_first_timestep = lstm_out[:,  0, self.lstm_hidden_dim:]                # shape=[num_batch, lstm_hidden_dim]
+        assert forward_last_timestep.shape == backward_first_timestep.shape             # check shape consistence
+        # import ipdb; ipdb.set_trace()
+        lstm_out = torch.cat((forward_last_timestep, backward_first_timestep), dim=1)   # shape=[num_batch, lstm_hidden_dim*2]
+        mean     = self.context_mean(lstm_out)                                          # shape=[num_batch, context_dim]
+        logvar   = self.context_logvar(lstm_out)                                        # shape=[num_batch, context_dim]
+        sample   = reparameterize(mean, logvar)
+        return mean, logvar, sample
