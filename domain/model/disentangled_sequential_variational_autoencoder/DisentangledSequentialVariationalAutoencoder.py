@@ -35,7 +35,7 @@ class DisentangledSequentialVariationalAutoencoder(nn.Module):
     def forward(self, input: Tensor, **kwargs) -> List[Tensor]:
         # import ipdb; ipdb.set_trace()
         num_batch, step, channle, width, height = input.shape
-        encoded_frame                = self.frame_encoder(input)                    #      shape = [num_batch, step, conv_fc_out_dims[-1]]
+        encoded_frame                = self.frame_encoder(input)                    # shape = [num_batch, step, conv_fc_out_dims[-1]]
         # context:
         f_mean, f_logvar, f_sample   = self.context_encoder(encoded_frame)          # both shape = [num_batch, context_dim]
         f_mean_prior                 = self.context_prior.mean(f_mean)
@@ -49,7 +49,6 @@ class DisentangledSequentialVariationalAutoencoder(nn.Module):
             width  =  width,
             height = height,
         )
-
         return  {
             "f_mean"         : f_mean,
             "f_logvar"       : f_logvar,

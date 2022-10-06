@@ -1,0 +1,32 @@
+kld_weight: 0.0001
+in_channels: 3
+network:
+  frame_encoder:
+    conv_out_channels:
+    - 32
+    - 64
+    - 128
+    - 256
+    conv_fc_out_dims:
+    - 4096
+    - 2048
+  context_encoder:
+    lstm_hidden_dim: 512
+    context_dim: 64
+  dynamical_state_encoder:
+    hidden_dim: 512
+    state_dim: 16
+  frame_decoder:
+    deconv_fc_out_dims:
+    - 2048
+    - 4096
+    deconv_in_channel: 256
+    deconv_out_channels:
+    - 128
+    - 128
+    - 64
+    - 32
+  dynamics_model:
+    state_dim: 16
+    hidden_dim: 512
+latent_dim: 2

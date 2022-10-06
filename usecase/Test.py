@@ -3,7 +3,7 @@ import copy
 import sys; import pathlib; p=pathlib.Path(); sys.path.append(str(p.parent.resolve()))
 from domain.model.ModelFactory import ModelFactory
 from domain.datamodule.DataModuleFactory import DataModuleFactory
-from pytorch_lightning import Trainer
+import pytorch_lightning as pl
 from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.utilities.seed import seed_everything
@@ -11,7 +11,7 @@ from omegaconf import OmegaConf
 from collections import defaultdict
 
 
-class Training:
+class Test:
     def __init__(self, config, additionl_callbacks=[]):
         self.config              = config
         self.additionl_callbacks = additionl_callbacks
@@ -39,23 +39,6 @@ class Training:
         print("seed: ", seed)
 
         model     = ModelFactory().create(**config.model)
-        tb_logger = TensorBoardLogger(**config.logger)
-        p         = pathlib.Path(tb_logger.log_dir)
-        p.mkdir(parents=True, exist_ok=True)
-        OmegaConf.save(config, tb_logger.log_dir + "/config.yaml")
+        model.load_from_checkpoint(config.reload.path)
+        model.freeze()
 
-        trainer = Trainer(
-            logger    = tb_logger,
-            callbacks = [
-                LearningRateMonitor(),
-                ModelCheckpoint(
-                    dirpath  = os.path.join(tb_logger.log_dir , "checkpoints"),
-                    filename = '{epoch}',
-                    **config.checkpoint
-                )
-            ] + self.additionl_callbacks,
-            **config.trainer
-        )
-
-        data = DataModuleFactory().create(**config.datamodule)
-        trainer.fit(model=model, datamodule=data)

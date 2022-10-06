@@ -65,6 +65,11 @@ class LitDisentangledSequentialVariationalAutoencoder(pl.LightningModule):
         return loss['loss']
 
 
+    # def predict_step(self, batch, batch_idx, dataloader_idx=0):
+    #     img_batch = batch  # shape = [num_batch, step, channel, w, h], Eg.) [128, 8, 3, 64, 64])
+    #     return self.model.forward(img_batch)
+
+
     def validation_step(self, batch, batch_idx):
         img_batch    = batch  # shape = [num_batch, step, channel, w, h], Eg.) [128, 8, 3, 64, 64])
         results_dict = self.model.forward(img_batch)

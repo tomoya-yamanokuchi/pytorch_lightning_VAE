@@ -3,6 +3,9 @@ defaults:
   - raytune  : async_with_optuna
   - notify   : slack
 
+reload:
+  path:
+
 datamodule:
   name       : "sprite"
   data_dir   : "./data/"
@@ -28,3 +31,4 @@ checkpoint:
   monitor                 : "loss"
   save_last               : False
   save_on_train_epoch_end : True
+
