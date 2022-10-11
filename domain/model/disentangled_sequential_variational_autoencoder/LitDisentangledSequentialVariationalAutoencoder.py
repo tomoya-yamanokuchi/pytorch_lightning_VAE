@@ -25,31 +25,32 @@ class LitDisentangledSequentialVariationalAutoencoder(pl.LightningModule):
         # self.summary = torchinfo.summary(self.model, input_size=(131, 8, 3, 64, 64))
 
 
+    def forward(self, input, **kwargs) -> Any:
+        return self.model.forward(input)
+
+
+    def decode(self, z, f):
+        '''
+        input:
+            - z: shape = []
+            - f: shape = []
+        '''
+        # import ipdb; ipdb.set_trace()
+
+        num_batch, step, _ = z.shape
+        # z         = z.view(num_batch, step, -1)
+        # import ipdb; ipdb.set_trace()
+        # f         = f.view(num_batch, step, -1)
+        x_recon   = self.model.frame_decoder(torch.cat((z, f.unsqueeze(1).expand(num_batch, step, -1)), dim=2))
+        return x_recon
+
+
     def configure_optimizers(self):
         optimizer = optim.Adam(self.parameters(), lr=1e-3)
         return optimizer
 
 
-    def sample_wide_range(self,
-                d1_min        : int,
-                d1_max        : int,
-                d2_min        : int,
-                d2_max        : int,
-                current_device: int,
-                **kwargs) -> Tensor:
-
-        num_sample = 10
-        z1      = torch.linspace(start=float(d1_min.to("cpu").numpy()), end=float(d1_max.to("cpu").numpy()), steps=num_sample)
-        z2      = torch.linspace(start=float(d2_min.to("cpu").numpy()), end=float(d2_max.to("cpu").numpy()), steps=num_sample)
-        grid_z1, grid_z2 = torch.meshgrid(z1, z2, indexing='ij')
-        z       = torch.stack([grid_z1.reshape(-1), grid_z2.reshape(-1)], axis=1)
-        z       = z.to(current_device)
-        samples = self.model.decoder.forward(z)
-        return samples
-
-
     def training_step(self, batch, batch_idx):
-        # import ipdb; ipdb.set_trace()
         # print("batch_idx: ", batch_idx)
         img_batch    = batch
         results_dict = self.model.forward(img_batch)
@@ -65,14 +66,10 @@ class LitDisentangledSequentialVariationalAutoencoder(pl.LightningModule):
         return loss['loss']
 
 
-    # def predict_step(self, batch, batch_idx, dataloader_idx=0):
-    #     img_batch = batch  # shape = [num_batch, step, channel, w, h], Eg.) [128, 8, 3, 64, 64])
-    #     return self.model.forward(img_batch)
-
-
     def validation_step(self, batch, batch_idx):
         img_batch    = batch  # shape = [num_batch, step, channel, w, h], Eg.) [128, 8, 3, 64, 64])
         results_dict = self.model.forward(img_batch)
+        # import ipdb; ipdb.set_trace()
         val_loss     = self.model.loss_function(
             **results_dict,
             x         = img_batch,
@@ -81,17 +78,32 @@ class LitDisentangledSequentialVariationalAutoencoder(pl.LightningModule):
         )
         self.log("val_loss", val_loss["loss"])
         self.save_progress(img_batch, results_dict)
+        # print(self.model.state_dict()["frame_decoder.deconv_fc.0.model.1.weight"])
+
+
+    def predict_step(self, batch, batch_idx):
+        img_batch    = batch  # shape = [num_batch, step, channel, w, h], Eg.) [128, 8, 3, 64, 64])
+        results_dict = self.model.forward(img_batch)
+        # import ipdb; ipdb.set_trace()
+        loss     = self.model.loss_function(
+            **results_dict,
+            x         = img_batch,
+            M_N       = self.kld_weight,
+            batch_idx = batch_idx
+        )
+        # self.log("val_loss", val_loss["loss"])
+        # self.save_progress(img_batch, results_dict)
+        return results_dict
 
 
     def save_progress(self, img_batch, results_dict: dict):
         if pathlib.Path(self.logger.log_dir).exists():
             p = pathlib.Path(self.logger.log_dir + "/reconstruction"); p.mkdir(parents=True, exist_ok=True)
-            save_sequence = 10
 
             num_batch, step, channel, width, height = img_batch.shape
-            # import ipdb; ipdb.set_trace()
 
-            images = []
+            save_sequence = 10
+            images        = []
             for n in range(save_sequence):
                 images.append(utils.make_grid(results_dict["x_recon"][n], nrow=step))
                 images.append(utils.make_grid(              img_batch[n], nrow=step))
@@ -101,16 +113,3 @@ class LitDisentangledSequentialVariationalAutoencoder(pl.LightningModule):
                 tensor = torch.cat(images, dim=1),
                 fp     = os.path.join(str(p), 'reconstruction_epoch' + str(self.current_epoch)) + '.png',
             )
-
-            # # 潜在空間の可視化を保存
-            # p = pathlib.Path(self.logger.log_dir + "/latentn_space"); p.mkdir(parents=True, exist_ok=True)
-            # visualization.samples(results_dict["f_mean"], None,
-            #     save_path = os.path.join(str(p), 'latentn_space' + str(self.current_epoch)) + '.png',
-            # )
-
-            # recon = self.sample_wide_range(mu[:, 0].min(), mu[:, 0].max(), mu[:, 1].min(), mu[:, 1].max(), current_device)
-            # p     = pathlib.Path(self.logger.log_dir + "/sample_grid"); p.mkdir(parents=True, exist_ok=True)
-            # utils.save_image(
-            #     tensor = utils.make_grid(recon, nrow=int(np.sqrt(recon.shape[0]))),
-            #     fp     = os.path.join(str(p), 'sample_grid_epoch' + str(self.current_epoch)) + '.png',
-            # )

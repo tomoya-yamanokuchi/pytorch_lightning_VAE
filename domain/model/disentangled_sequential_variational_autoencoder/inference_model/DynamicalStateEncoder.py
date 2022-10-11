@@ -4,8 +4,8 @@ from torch import Tensor
 from torch import nn
 from typing import List
 import numpy as np
-from custom_network_layer import LinearUnit
-from custom_network_layer import reparameterize
+from custom.layer.LinearUnit import LinearUnit
+from custom.utility.reparameterize import reparameterize
 
 class DynamicalStateEncoder(nn.Module):
     def __init__(self,
@@ -19,7 +19,7 @@ class DynamicalStateEncoder(nn.Module):
         self.mean    = nn.Linear(hidden_dim, state_dim)
         self.logvar  = nn.Linear(hidden_dim, state_dim)
 
-        self.summary = torchinfo.summary(self.hidden, input_size=(1, 2048))
+        self.summary = torchinfo.summary(self.hidden, input_size=(2, 2048))
 
 
     def forward(self,  x: Tensor) -> List[Tensor]:

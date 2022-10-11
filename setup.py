@@ -1,9 +1,9 @@
 from setuptools import setup, find_packages
 
 setup(
-    name        = 'custom_network_layer',
+    name        = 'custom',
     version     = '0.1.0',
     description = 'pytorch custom network',
-    packages    = find_packages(where='custom_network_layer'),
-    package_dir = {'': 'custom_network_layer'},
+    packages    = find_packages(where='custom'),
+    package_dir = {'': 'custom'},
 )

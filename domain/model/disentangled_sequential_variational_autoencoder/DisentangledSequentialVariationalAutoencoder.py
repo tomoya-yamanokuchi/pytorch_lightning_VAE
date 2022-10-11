@@ -1,10 +1,9 @@
-import cv2
 import torch
-import torchinfo
 from torch import nn
 from torch import Tensor
 from typing import List
 from torch.nn import functional as F
+from omegaconf.omegaconf import OmegaConf
 
 from .inference_model.FrameEncoder import FrameEncoder
 from .inference_model.ContextEncoder import ContextEncoder
@@ -13,17 +12,14 @@ from .generative_model.FrameDecoder import FrameDecoder
 from .generative_model.DynamicsModel import DynamicsModel
 from .generative_model.ContextPrior import ContextPrior
 
-import cv2
-import numpy as np
 
 
 class DisentangledSequentialVariationalAutoencoder(nn.Module):
     def __init__(self,
-                 in_channels      : int,
-                 network,
+                 in_channels: int,
+                 network    : OmegaConf,
                  **kwargs) -> None:
         super().__init__()
-
         self.frame_encoder           = FrameEncoder(in_channels, **network.frame_encoder)
         self.context_encoder         = ContextEncoder(network.frame_encoder.conv_fc_out_dims[-1], **network.context_encoder)
         self.dynamical_state_encoder = DynamicalStateEncoder(network.frame_encoder.conv_fc_out_dims[-1], **network.dynamical_state_encoder)
@@ -44,11 +40,7 @@ class DisentangledSequentialVariationalAutoencoder(nn.Module):
         z_mean, z_logvar, z_sample   = self.dynamical_state_encoder(encoded_frame)  # both shape = [num_batch, step, state_dim]
         z_mean_prior, z_logvar_prior = self.dynamics_model(input, num_batch, step)
         # image reconstruction
-        x_recon = self.frame_decoder(
-            x      = torch.cat((z_sample, f_sample.unsqueeze(1).expand(num_batch, step, -1)), dim=2),
-            width  =  width,
-            height = height,
-        )
+        x_recon                      = self.frame_decoder(torch.cat((z_sample, f_sample.unsqueeze(1).expand(num_batch, step, -1)), dim=2))
         return  {
             "f_mean"         : f_mean,
             "f_logvar"       : f_logvar,
@@ -64,12 +56,17 @@ class DisentangledSequentialVariationalAutoencoder(nn.Module):
         }
 
 
-    def gaussian_likelihood(self, mean, logscale, x):
-        scale        = torch.exp(logscale)
-        distribution = torch.distributions.Normal(mean, scale)
-        log_prob     = distribution.log_prob(x)
-        import ipdb; ipdb.set_trace()
-        return log_prob.sum(dim=(1, 2, 3))
+    def decode(self, z, f):
+        '''
+        input:
+            - z: shape = []
+            - f: shape = []
+        '''
+        num_batch = 1
+        step      = 1
+        x_recon   = self.frame_decoder(torch.cat((z, f.unsqueeze(1).expand(num_batch, step, -1)), dim=2))
+        return x_recon
+
 
 
     def kl_reverse(self, q, p, q_sample):

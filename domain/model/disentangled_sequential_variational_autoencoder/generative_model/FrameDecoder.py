@@ -25,7 +25,7 @@ class FrameDecoder(nn.Module):
         self.init_in_dim = copy.deepcopy(in_dim)
 
         # ------------ Linear ------------
-        modules = []
+        modules = nn.ModuleList()
         for out_dim in deconv_fc_out_dims:
             modules.append(
                 LinearUnit(
@@ -38,7 +38,7 @@ class FrameDecoder(nn.Module):
         self.summary_deconv_fc = torchinfo.summary(self.deconv_fc, input_size=(1, self.init_in_dim))
 
         # ------------ Conv ------------
-        # 全結合層の出力次元とdeconvの入力チャンネルからdeconvへの入力サイズを計算
+        # 全結合層の出力次元とdeconvの入力チャンネルからdeconvへの入力サイズ(w, h)を計算
         self.deconv_in_channel = deconv_in_channel
         quotient, remainder    = np.divmod(deconv_fc_out_dims[-1], deconv_in_channel)
         assert remainder == 0
@@ -49,7 +49,7 @@ class FrameDecoder(nn.Module):
 
         in_channels = copy.deepcopy(deconv_in_channel)
 
-        modules = []
+        modules = nn.ModuleList()
         for out_channels in deconv_out_channels:
             modules.append(
                 ConvUnitTranspose(
@@ -74,16 +74,15 @@ class FrameDecoder(nn.Module):
                 nonlinearity   = nn.Tanh(),
             )
         )
-        self.deconv_out         = nn.Sequential(*modules)
-        # self.summary_deconv_out = torchinfo.summary(self.deconv_out, input_size=(1, deconv_fc_out_dims[-1]))
+        self.deconv_out                     = nn.Sequential(*modules)
+        self.summary_deconv_out             = torchinfo.summary(self.deconv_out, input_size=(1, deconv_in_channel, self.width_deconv_in, self.height_deconv_in))
+        self.width_recon, self.height_recon = self.summary_deconv_out.summary_list[-1].output_size[-2:]
 
 
-    def forward(self,  x: Tensor, width: int, height: int) -> List[Tensor]:
+    def forward(self,  x: Tensor) -> List[Tensor]:
         num_batch, step, dim = x.shape
         x = x.view(-1, dim)                                                                 # [num_batch * step, dim]
         x = self.deconv_fc(x)                                                               # [num_batch * step, deconv_fc_out_dims[-1]]
         x = x.view(-1, self.deconv_in_channel, self.width_deconv_in, self.height_deconv_in) # [num_batch * step, ~]
         x = self.deconv_out(x)                                                              # [num_batch * step, rgb_channel, image_width, image_height]
-        return x.view(num_batch, step, 3, width, height)
-
-
+        return x.view(num_batch, step, 3, self.width_recon, self.height_recon)

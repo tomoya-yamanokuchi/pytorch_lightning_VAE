@@ -2,7 +2,7 @@ import torch
 from torch import Tensor
 from torch import nn
 from typing import List, Any
-from custom_network_layer import reparameterize
+from custom import reparameterize
 
 
 class DynamicsModel(nn.Module):

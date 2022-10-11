@@ -38,9 +38,10 @@ class Training:
         seed = seed_everything(config.experiment.manual_seed, True)
         print("seed: ", seed)
 
-        model     = ModelFactory().create(**config.model)
-        tb_logger = TensorBoardLogger(**config.logger)
-        p         = pathlib.Path(tb_logger.log_dir)
+        lit_model_class = ModelFactory().create(config.model.name)
+        lit_model       = lit_model_class(**config.model)
+        tb_logger       = TensorBoardLogger(**config.logger)
+        p               = pathlib.Path(tb_logger.log_dir)
         p.mkdir(parents=True, exist_ok=True)
         OmegaConf.save(config, tb_logger.log_dir + "/config.yaml")
 
@@ -51,11 +52,11 @@ class Training:
                 ModelCheckpoint(
                     dirpath  = os.path.join(tb_logger.log_dir , "checkpoints"),
                     filename = '{epoch}',
-                    **config.checkpoint
+                    **config.checkpoint,
                 )
             ] + self.additionl_callbacks,
             **config.trainer
         )
 
         data = DataModuleFactory().create(**config.datamodule)
-        trainer.fit(model=model, datamodule=data)
+        trainer.fit(model=lit_model, datamodule=data)

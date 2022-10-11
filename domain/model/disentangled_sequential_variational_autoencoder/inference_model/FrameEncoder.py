@@ -17,7 +17,7 @@ class FrameEncoder(nn.Module):
         super().__init__()
 
         # ------------ Conv ------------
-        modules = []
+        modules = nn.ModuleList()
         for out_channels in conv_out_channels:
             modules.append(
                 ConvUnit(
@@ -30,7 +30,7 @@ class FrameEncoder(nn.Module):
         self.summary_conv_out = torchinfo.summary(self.conv_out, input_size=(1, 3, 64, 64))
 
         # ------------ Linear ------------
-        modules = []
+        modules = nn.ModuleList()
         in_dim = np.prod(self.summary_conv_out.summary_list[-1].output_size)
         for out_dim in conv_fc_out_dims:
             modules.append(

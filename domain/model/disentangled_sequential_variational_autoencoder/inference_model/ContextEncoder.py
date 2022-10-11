@@ -4,8 +4,8 @@ from torch import Tensor
 from torch import nn
 from typing import List
 import numpy as np
-from custom_network_layer.LinearUnit import LinearUnit
-from custom_network_layer import reparameterize
+from custom.layer.LinearUnit import LinearUnit
+from custom.utility.reparameterize import reparameterize
 
 class ContextEncoder(nn.Module):
     def __init__(self,
@@ -44,6 +44,7 @@ class ContextEncoder(nn.Module):
         assert forward_last_timestep.shape == backward_first_timestep.shape             # check shape consistence
         # import ipdb; ipdb.set_trace()
         lstm_out = torch.cat((forward_last_timestep, backward_first_timestep), dim=1)   # shape=[num_batch, lstm_hidden_dim*2]
+        # import ipdb; ipdb.set_trace()
         mean     = self.context_mean(lstm_out)                                          # shape=[num_batch, context_dim]
         logvar   = self.context_logvar(lstm_out)                                        # shape=[num_batch, context_dim]
         sample   = reparameterize(mean, logvar)
