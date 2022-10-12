@@ -52,7 +52,7 @@ class LitDisentangledSequentialVariationalAutoencoder(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         # print("batch_idx: ", batch_idx)
-        img_batch    = batch
+        img_batch, _ = batch
         results_dict = self.model.forward(img_batch)
         loss         = self.model.loss_function(
             **results_dict,
@@ -67,33 +67,17 @@ class LitDisentangledSequentialVariationalAutoencoder(pl.LightningModule):
 
 
     def validation_step(self, batch, batch_idx):
-        img_batch    = batch  # shape = [num_batch, step, channel, w, h], Eg.) [128, 8, 3, 64, 64])
+        img_batch, _ = batch  # shape = [num_batch, step, channel, w, h], Eg.) [128, 8, 3, 64, 64])
         results_dict = self.model.forward(img_batch)
-        # import ipdb; ipdb.set_trace()
-        val_loss     = self.model.loss_function(
+        loss         = self.model.loss_function(
             **results_dict,
             x         = img_batch,
             M_N       = self.kld_weight,
             batch_idx = batch_idx
         )
-        self.log("val_loss", val_loss["loss"])
+        self.log("val_loss", loss["loss"])
         self.save_progress(img_batch, results_dict)
         # print(self.model.state_dict()["frame_decoder.deconv_fc.0.model.1.weight"])
-
-
-    def predict_step(self, batch, batch_idx):
-        img_batch    = batch  # shape = [num_batch, step, channel, w, h], Eg.) [128, 8, 3, 64, 64])
-        results_dict = self.model.forward(img_batch)
-        # import ipdb; ipdb.set_trace()
-        loss     = self.model.loss_function(
-            **results_dict,
-            x         = img_batch,
-            M_N       = self.kld_weight,
-            batch_idx = batch_idx
-        )
-        # self.log("val_loss", val_loss["loss"])
-        # self.save_progress(img_batch, results_dict)
-        return results_dict
 
 
     def save_progress(self, img_batch, results_dict: dict):

@@ -6,74 +6,60 @@ from pytorch_lightning import Trainer
 import sys; import pathlib; p=pathlib.Path(); sys.path.append(str(p.parent.resolve()))
 from domain.model.ModelFactory import ModelFactory
 from domain.datamodule.DataModuleFactory import DataModuleFactory
+from domain.test.TestModel import TestModel
 from custom.utility import image_converter
 import os
 from torchvision import utils
 
 import cv2
 import numpy as np
-cv2.namedWindow('img', cv2.WINDOW_NORMAL)
 
 
-# config
-reload_dir         = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/DSVAE/version_98"
-config             = OmegaConf.load(reload_dir + "/config.yaml")
-config.reload.path = reload_dir + "/checkpoints/last.ckpt"
 
-# model loading
-device          = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-lit_model_class = ModelFactory().create(config.model.name)
-# lit_model       = lit_model_class(**config.model)
+test = TestModel(
+    config_dir  = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/DSVAE/version_111",
+    checkpoints = "last.ckpt"
+)
+device     = test.device
+model      = test.load_model()
+dataloader = test.load_dataloader()
 
-# print(lit_model.model.state_dict()["frame_decoder.deconv_fc.0.model.1.weight"])
-# import ipdb; ipdb.set_trace()
+iter_dataloader = iter(dataloader)
+batch, index    = next(iter_dataloader)
+assert index[0] == 0
 
-lit_model = lit_model_class.load_from_checkpoint(config.reload.path)
-lit_model.freeze()
-model     = lit_model.eval().cuda(device)
-
-print(lit_model.model.state_dict()["frame_decoder.deconv_fc.0.model.1.weight"])
-
-import ipdb; ipdb.set_trace()
-
-# data loading
-datamodule = DataModuleFactory().create(**config.datamodule)
-datamodule.setup(stage="fit")
-data       = datamodule.val_dataloader()
+test_index1 = 0  # 黒髪左歩き
+test_index2 = 16 # 緑髪右歩き
+img_seq1    = batch[test_index1].unsqueeze(dim=0).to(device)
+img_seq2    = batch[test_index2].unsqueeze(dim=0).to(device)
 
 
-for batch in data:
-    batch = batch.to(device)
-    import ipdb; ipdb.set_trace()
-    # batch = batch[:2]
-    return_dict = model(batch)
-    # x_recon = model.decode(return_dict["z_sample"], return_dict["f_sample"])
-    x_recon = return_dict["x_recon"]
+return_dict_seq1 = model(img_seq1)
+return_dict_seq2 = model(img_seq2)
+
+x_recon1 = model.decode(return_dict_seq1["z_mean"], return_dict_seq1["f_mean"])
+x_recon2 = model.decode(return_dict_seq2["z_mean"], return_dict_seq2["f_mean"])
+
+x_recon_z2_f1 = model.decode(return_dict_seq2["z_mean"], return_dict_seq1["f_mean"])
+x_recon_z1_f2 = model.decode(return_dict_seq1["z_mean"], return_dict_seq2["f_mean"])
 
 
-    # import ipdb; ipdb.set_trace()
+save_sequence = 1
+step          = 8
+images        = []
+for n in range(save_sequence):
+    images.append(utils.make_grid(x_recon1[n], nrow=step))
+    images.append(utils.make_grid(img_seq1[n], nrow=step))
+    images.append(utils.make_grid(x_recon2[n], nrow=step))
+    images.append(utils.make_grid(img_seq2[n], nrow=step))
 
-    save_sequence = 10
-    step          = 8
-    images        = []
-    for n in range(save_sequence):
-        images.append(utils.make_grid(return_dict["x_recon"][n], nrow=step))
-        images.append(utils.make_grid(                batch[n], nrow=step))
+    images.append(utils.make_grid(torch.ones_like(img_seq2[n]), nrow=step))
+
+    images.append(utils.make_grid(x_recon_z2_f1[n], nrow=step))
+    images.append(utils.make_grid(x_recon_z1_f2[n], nrow=step))
 
     # 入力画像と再構成画像を並べて保存
     utils.save_image(
         tensor = torch.cat(images, dim=1),
-        fp     = "/home/tomoya-y/workspace/pytorch_lightning_VAE/reconstruction_epoch_test.png",
+        fp     = "/home/tomoya-y/workspace/pytorch_lightning_VAE/feature_swapping.png",
     )
-
-    # import ipdb; ipdb.set_trace()
-
-    # num_batch, step, channel, width, height =  x_recon.shape
-    # for n in range(num_batch):
-    #     for t in range(step):
-    #         x   = image_converter.torch2numpy(x_recon[n,t])
-    #         img = image_converter.torch2numpy(images[n,t])
-
-    #         # import ipdb; ipdb.set_trace()
-    #         cv2.imshow('img', np.concatenate((x, img), axis=1))
-    #         cv2.waitKey(10)

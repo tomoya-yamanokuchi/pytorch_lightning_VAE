@@ -64,7 +64,7 @@ class Sprite(VisionDataset):
         # img_unrolled = img.view(-1, channel, width, height)
         # if self.transform is not None:
             # img = self.transform(img)
-        return img
+        return img, index
 
 
     def __len__(self):

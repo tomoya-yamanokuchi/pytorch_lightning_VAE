@@ -28,17 +28,16 @@ class DisentangledSequentialVariationalAutoencoder(nn.Module):
         self.context_prior           = ContextPrior(network.context_encoder.context_dim)
 
 
-    def forward(self, input: Tensor, **kwargs) -> List[Tensor]:
-        # import ipdb; ipdb.set_trace()
-        num_batch, step, channle, width, height = input.shape
-        encoded_frame                = self.frame_encoder(input)                    # shape = [num_batch, step, conv_fc_out_dims[-1]]
+    def forward(self, img: Tensor, **kwargs) -> List[Tensor]:
+        num_batch, step, channle, width, height = img.shape
+        encoded_frame                = self.frame_encoder(img)                    # shape = [num_batch, step, conv_fc_out_dims[-1]]
         # context:
         f_mean, f_logvar, f_sample   = self.context_encoder(encoded_frame)          # both shape = [num_batch, context_dim]
         f_mean_prior                 = self.context_prior.mean(f_mean)
         f_logvar_prior               = self.context_prior.logvar(f_logvar)
         # dynamical state:
         z_mean, z_logvar, z_sample   = self.dynamical_state_encoder(encoded_frame)  # both shape = [num_batch, step, state_dim]
-        z_mean_prior, z_logvar_prior = self.dynamics_model(input, num_batch, step)
+        z_mean_prior, z_logvar_prior = self.dynamics_model(num_batch, step, device=img.device)
         # image reconstruction
         x_recon                      = self.frame_decoder(torch.cat((z_sample, f_sample.unsqueeze(1).expand(num_batch, step, -1)), dim=2))
         return  {
