@@ -17,7 +17,7 @@ import numpy as np
 
 
 test = TestModel(
-    config_dir  = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/DSVAE/version_111",
+    config_dir  = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/DSVAE/version_202",
     checkpoints = "last.ckpt"
 )
 device     = test.device
@@ -25,11 +25,16 @@ model      = test.load_model()
 dataloader = test.load_dataloader()
 
 iter_dataloader = iter(dataloader)
-batch, index    = next(iter_dataloader)
+index, batch,   = next(iter_dataloader)
 assert index[0] == 0
 
 test_index1 = 0  # 黒髪左歩き
 test_index2 = 16 # 緑髪右歩き
+
+
+test_index1 = 0  # 黒髪左歩き
+test_index2 = 12 # 緑髪右歩き
+
 img_seq1    = batch[test_index1].unsqueeze(dim=0).to(device)
 img_seq2    = batch[test_index2].unsqueeze(dim=0).to(device)
 
@@ -45,7 +50,8 @@ x_recon_z1_f2 = model.decode(return_dict_seq1["z_mean"], return_dict_seq2["f_mea
 
 
 save_sequence = 1
-step          = 8
+# step          = 8 # sprite
+step          = 25 # valve
 images        = []
 for n in range(save_sequence):
     images.append(utils.make_grid(x_recon1[n], nrow=step))

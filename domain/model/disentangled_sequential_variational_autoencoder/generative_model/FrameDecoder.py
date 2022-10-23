@@ -6,9 +6,9 @@ from torch import nn
 from typing import List
 import numpy as np
 import copy
-from custom_network_layer.ConvUnit import ConvUnit
-from custom_network_layer.ConvUnitTranspose import ConvUnitTranspose
-from custom_network_layer.LinearUnit import LinearUnit
+from custom.layer.ConvUnit import ConvUnit
+from custom.layer.ConvUnitTranspose import ConvUnitTranspose
+from custom.layer.LinearUnit import LinearUnit
 
 
 class FrameDecoder(nn.Module):

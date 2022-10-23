@@ -52,8 +52,8 @@ class MNISTDataModule(pl.LightningDataModule):
             [
                 transforms.ToTensor(),
                 transforms.Resize(size=(64)),
-                transforms.Lambda(lambda x: torch.cat([x, x, x], 0)),
-                transforms.Normalize((0.1307,), (0.3081,)),
+                transforms.Lambda(lambda x: torch.cat([x, x, x], 0)), # conver gray-scale to RGB
+                transforms.Normalize((0.1307,), (0.3081,)),           # conver gray-scale to RGB
             ]
         )
 

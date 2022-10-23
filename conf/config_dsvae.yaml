@@ -1,5 +1,5 @@
 defaults:
-  - model    : dsvae_lite
+  - model    : dsvae_valve
   - raytune  : async_with_optuna
   - notify   : slack
 
@@ -7,12 +7,8 @@ reload:
   path:
 
 datamodule:
-  name       : "sprite"
+  name       : "action_norm_valve"
   data_dir   : "./data/"
-  # batch_size : 256
-  # shuffle    : False
-  # num_workers: 0
-  # pin_memory : False
 
 logger:
   save_dir: "logs/"

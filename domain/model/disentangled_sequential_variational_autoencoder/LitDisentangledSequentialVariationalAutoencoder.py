@@ -12,7 +12,7 @@ from .DisentangledSequentialVariationalAutoencoder import DisentangledSequential
 from .. import visualization
 
 import cv2
-
+from custom.utility.image_converter import torch2numpy
 
 class LitDisentangledSequentialVariationalAutoencoder(pl.LightningModule):
     def __init__(self,
@@ -52,9 +52,9 @@ class LitDisentangledSequentialVariationalAutoencoder(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         # print("batch_idx: ", batch_idx)
-        img_batch, _ = batch
-        results_dict = self.model.forward(img_batch)
-        loss         = self.model.loss_function(
+        index, img_batch = batch
+        results_dict     = self.model.forward(img_batch)
+        loss             = self.model.loss_function(
             **results_dict,
             x         = img_batch,
             M_N       = self.kld_weight,
@@ -67,32 +67,37 @@ class LitDisentangledSequentialVariationalAutoencoder(pl.LightningModule):
 
 
     def validation_step(self, batch, batch_idx):
-        img_batch, _ = batch  # shape = [num_batch, step, channel, w, h], Eg.) [128, 8, 3, 64, 64])
-        results_dict = self.model.forward(img_batch)
-        loss         = self.model.loss_function(
+        index, img_batch = batch  # shape = [num_batch, step, channel, w, h], Eg.) [128, 8, 3, 64, 64])
+        results_dict     = self.model.forward(img_batch)
+        loss             = self.model.loss_function(
             **results_dict,
             x         = img_batch,
             M_N       = self.kld_weight,
             batch_idx = batch_idx
         )
         self.log("val_loss", loss["loss"])
-        self.save_progress(img_batch, results_dict)
-        # print(self.model.state_dict()["frame_decoder.deconv_fc.0.model.1.weight"])
+        if batch_idx == 0:
+            self.save_progress(img_batch, results_dict)
 
 
     def save_progress(self, img_batch, results_dict: dict):
         if pathlib.Path(self.logger.log_dir).exists():
             p = pathlib.Path(self.logger.log_dir + "/reconstruction"); p.mkdir(parents=True, exist_ok=True)
-
             num_batch, step, channel, width, height = img_batch.shape
 
-            save_sequence = 10
-            images        = []
-            for n in range(save_sequence):
-                images.append(utils.make_grid(results_dict["x_recon"][n], nrow=step))
-                images.append(utils.make_grid(              img_batch[n], nrow=step))
+            # cv2.imshow("img", torch2numpy(img_batch[0, 0]) / 255. )
+            # cv2.imshow("img", torch2numpy(results_dict["x_recon"][0, 0]) / 255. )
+            # cv2.waitKey(100)
+            # import ipdb; ipdb.set_trace()
 
-            # 入力画像と再構成画像を並べて保存
+            save_sequence = 8  # np.minimum(10, mod)
+            images        = []
+            permute       = [2, 1, 0] # BGR --> RGB for accurate save using PIL
+            for n in range(save_sequence):
+                images.append(utils.make_grid(results_dict["x_recon"][n][:, permute, :, :], nrow=step))
+                images.append(utils.make_grid(              img_batch[n][:, permute, :, :], nrow=step))
+
+            # save input and reconstructed images
             utils.save_image(
                 tensor = torch.cat(images, dim=1),
                 fp     = os.path.join(str(p), 'reconstruction_epoch' + str(self.current_epoch)) + '.png',
