@@ -17,7 +17,8 @@ import numpy as np
 
 
 test = TestModel(
-    config_dir  = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/DSVAE/version_202",
+    config_dir  = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/DSVAE/version_111",
+    # config_dir  = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/DSVAE/version_202",
     checkpoints = "last.ckpt"
 )
 device     = test.device
@@ -67,5 +68,5 @@ for n in range(save_sequence):
     # 入力画像と再構成画像を並べて保存
     utils.save_image(
         tensor = torch.cat(images, dim=1),
-        fp     = "/home/tomoya-y/workspace/pytorch_lightning_VAE/feature_swapping.png",
+        fp     = "/home/tomoya-y/workspace/pytorch_lightning_VAE/fig/feature_swapping.png",
     )
