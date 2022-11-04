@@ -25,6 +25,7 @@ device     = test.device
 model      = test.load_model()
 dataloader = test.load_dataloader()
 
+
 iter_dataloader = iter(dataloader)
 index, batch,   = next(iter_dataloader)
 assert index[0] == 0
