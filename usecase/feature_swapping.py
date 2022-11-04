@@ -17,8 +17,8 @@ import numpy as np
 
 
 test = TestModel(
-    config_dir  = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/DSVAE/version_111",
-    # config_dir  = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/DSVAE/version_202",
+    # config_dir  = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/DSVAE/version_205",
+    config_dir  = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/DSVAE/version_202",
     checkpoints = "last.ckpt"
 )
 device     = test.device
@@ -53,17 +53,18 @@ x_recon_z1_f2 = model.decode(return_dict_seq1["z_mean"], return_dict_seq2["f_mea
 save_sequence = 1
 # step          = 8 # sprite
 step          = 25 # valve
+num_slice     = 3
 images        = []
 for n in range(save_sequence):
-    images.append(utils.make_grid(x_recon1[n], nrow=step))
-    images.append(utils.make_grid(img_seq1[n], nrow=step))
-    images.append(utils.make_grid(x_recon2[n], nrow=step))
-    images.append(utils.make_grid(img_seq2[n], nrow=step))
+    images.append(utils.make_grid(x_recon1[n][::num_slice], nrow=step))
+    images.append(utils.make_grid(img_seq1[n][::num_slice], nrow=step))
+    images.append(utils.make_grid(x_recon2[n][::num_slice], nrow=step))
+    images.append(utils.make_grid(img_seq2[n][::num_slice], nrow=step))
 
-    images.append(utils.make_grid(torch.ones_like(img_seq2[n]), nrow=step))
+    images.append(utils.make_grid(torch.ones_like(img_seq2[n])[::num_slice], nrow=step))
 
-    images.append(utils.make_grid(x_recon_z2_f1[n], nrow=step))
-    images.append(utils.make_grid(x_recon_z1_f2[n], nrow=step))
+    images.append(utils.make_grid(x_recon_z2_f1[n][::num_slice], nrow=step))
+    images.append(utils.make_grid(x_recon_z1_f2[n][::num_slice], nrow=step))
 
     # 入力画像と再構成画像を並べて保存
     utils.save_image(

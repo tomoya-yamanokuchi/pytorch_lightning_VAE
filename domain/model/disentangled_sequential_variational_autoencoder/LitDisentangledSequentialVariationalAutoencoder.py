@@ -94,8 +94,8 @@ class LitDisentangledSequentialVariationalAutoencoder(pl.LightningModule):
             images        = []
             permute       = [2, 1, 0] # BGR --> RGB for accurate save using PIL
             for n in range(save_sequence):
-                images.append(utils.make_grid(results_dict["x_recon"][n][:, permute, :, :], nrow=step))
-                images.append(utils.make_grid(              img_batch[n][:, permute, :, :], nrow=step))
+                images.append(utils.make_grid(results_dict["x_recon"][n], nrow=step))
+                images.append(utils.make_grid(              img_batch[n], nrow=step))
 
             # save input and reconstructed images
             utils.save_image(
