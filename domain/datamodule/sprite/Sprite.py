@@ -66,6 +66,7 @@ class Sprite(VisionDataset):
             # img = self.transform(img)
         ### img, state, ctrl = load(~)
         ### return img["canonical"], img[""]
+        # print("min. max = [{}, {}]".format(img.min(), img.max()))
         return index, img
 
 

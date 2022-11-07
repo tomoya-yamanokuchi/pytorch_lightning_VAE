@@ -10,7 +10,7 @@ import shelve
 from natsort import natsorted
 from pathlib import Path
 from typing import List, Tuple, Optional, Callable
-
+from PIL import Image
 
 
 class ActionNormalizedValve(VisionDataset):
@@ -26,8 +26,8 @@ class ActionNormalizedValve(VisionDataset):
             - claw3だけ動く
             - ３本同時に動く（左右）など
         - minmax value:
-            - min: -1.0
-            - max:  1.0
+            - min: 0
+            - max: 255
     '''
 
     def __init__(self,
@@ -58,23 +58,39 @@ class ActionNormalizedValve(VisionDataset):
         path                = self.img_paths[index]                      # 絶対パス: Ex.) PosixPath('data/Sprite/lpc-dataset/train/1808.sprite')
         path_without_suffix = str(path.resolve()).split(".")[0]          #; print(path_without_suffix)
         db                  = shelve.open(path_without_suffix, flag='r') # read only
-        img_numpy           = db["image"]["canonical"]                   # 複数ステップ分が含まれている(1系列分)
-        # print("min: {} max: {}".format(img_numpy.min(), img_numpy.max())) # max=0, min=255
+        img_numpy_can       = db["image"]["canonical"]                   # 複数ステップ分が含まれている(1系列分)
+        img_numpy_ran       = db["image"]["random_nonfix"]               # 複数ステップ分が含まれている(1系列分)
+        # print("min: {} max: {}".format(img_numpy_can.min(), img_numpy_can.max())) # max=0, min=255
+        # print("min: {} max: {}".format(img_numpy_ran.min(), img_numpy_ran.max())) # max=0, min=255
         # state = db["state"]
         # ctrl  = db["ctrl"]
-        step, width, height, channel = img_numpy.shape  # channlの順番に注意（保存形式に依存する）
+        # import ipdb; ipdb.set_trace()
+        step, width, height, channel = img_numpy_can.shape  # channlの順番に注意（保存形式に依存する）
         assert channel == 3
 
-        img_torch = torch.zeros(step, channel, width, height)
+        img_torch_can = torch.zeros(step, channel, width, height)
+        img_torch_ran = torch.zeros(step, channel, width, height)
         if self.transform is not None:
             for t in range(step):
-                '''
-                - ToTensor() が channel-first への入れ替と[0,1]への正規化をやってくれる
-                - Normalize が 標準化をしてくれる
-                '''
-                img_torch[t] = self.transform(img_numpy[t])
-        # print("min: {} max: {}".format(img_torch.min(), img_torch.max())) # max=1.0, min=-1.0
-        return index, img_torch
+                img_torch_can[t] = self.transform_all(img_numpy_can[t])
+                img_torch_ran[t] = self.transform_all(img_numpy_ran[t])
+        # print("min: {} max: {}".format(img_torch_can.min(), img_torch_ran.max())) # max=1.0, min=-1.0
+        return index, img_torch_can, img_torch_ran
+
+
+    def transform_all(self, img_numpy):
+        '''
+        - まずnumpy_arrayをPILとして読み込んでBGRをRGBに変換
+        - ToTensor() が channel-first への入れ替と[0,1]への正規化をやってくれる
+        - その後に[-1, 1]へと正規化する（デコーダの出力ネットワークの活性化関数がTanh()のため）
+        '''
+        x_min =  0.0; x_max = 1.0
+        m     = -1.0;     M = 1.0
+
+        img = np.flip(img_numpy, axis=-1).copy()
+        img = self.transform(img)
+        img = ((img - x_min) / (x_max - x_min)) * (M - m) + m
+        return img
 
 
     def __len__(self):

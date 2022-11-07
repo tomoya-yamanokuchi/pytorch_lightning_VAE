@@ -9,7 +9,7 @@ from ray.tune.integration.pytorch_lightning import TuneReportCallback
 from domain.raytune.SchedulerFactory import SchedulerFactory
 from domain.raytune.SearchAlgorithmFactory import SearchAlgorithmFactory
 from domain.notify.Notifying import Notifying
-from Training import Training
+from domain.train.Training import Training
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="config")

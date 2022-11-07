@@ -50,10 +50,6 @@ class ActionNormalizedValveDataModule(pl.LightningDataModule):
         return transforms.Compose(
             [
                 transforms.ToTensor(), # numpy (H x W x C) [0, 255] --> torch (C x H x W) [0.0, 1.0]
-                # transforms.Normalize(
-                #     mean = (0.6228671625689327, 0.6377793987055758, 0.6407482041398562), # train dataset の [0,1] 変換後の mean
-                #     std  = (0.4035978685941395, 0.3913997249338733, 0.39240566963941836) # train dataset の [0,1] 変換後の std
-                # ),
             ]
         )
 

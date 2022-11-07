@@ -1,0 +1,30 @@
+defaults:
+  - model    : r2c-dsvae
+  - raytune  : async_with_optuna
+  - notify   : slack
+
+reload:
+  path:
+
+datamodule:
+  # name       : "sprite"
+  name       : "action_norm_valve"
+  data_dir   : "./data/"
+
+logger:
+  save_dir: "logs/"
+  name    : "R2C-DSVAE"
+
+experiment:
+  manual_seed: 1265
+
+trainer:
+  gpus                : [1]
+  limit_train_batches : 100
+  max_epochs          : 500
+
+checkpoint:
+  every_n_epochs          : 50
+  save_top_k              : -1
+  save_last               : True
+  monitor                 : "loss"
