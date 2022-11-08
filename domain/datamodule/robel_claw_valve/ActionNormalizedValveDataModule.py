@@ -20,8 +20,8 @@ class ActionNormalizedValveDataModule(pl.LightningDataModule):
         # Assign train/val datasets for use in dataloaders
         if stage == "fit" or stage is None:
             full = ActionNormalizedValve(self.data_dir, train=True, transform=self.transform)
-            assert full.num_data == 2000
-            self.num_train       = 1800
+            assert full.num_data == 2200
+            self.num_train       = 2000
             self.num_val         = 200
             self.train, self.val = random_split(full, [self.num_train, self.num_val])
 

@@ -32,18 +32,10 @@ class LitRandomized2CanonicalDisentangledSequentialVariationalAutoencoder(pl.Lig
 
 
     def decode(self, z, f):
-        '''
-        input:
-            - z: shape = []
-            - f: shape = []
-        '''
+        num_batch, step, _   = z.shape
+        a_mean_decoded, _, _ = self.model.latent_frame_decoder(torch.cat((z, f.unsqueeze(1).expand(num_batch, step, -1)), dim=2))
+        x_recon              = self.model.frame_decoder(a_mean_decoded)
         # import ipdb; ipdb.set_trace()
-
-        num_batch, step, _ = z.shape
-        # z         = z.view(num_batch, step, -1)
-        # import ipdb; ipdb.set_trace()
-        # f         = f.view(num_batch, step, -1)
-        x_recon   = self.model.frame_decoder(torch.cat((z, f.unsqueeze(1).expand(num_batch, step, -1)), dim=2))
         return x_recon
 
 

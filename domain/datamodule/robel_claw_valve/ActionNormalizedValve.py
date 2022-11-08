@@ -16,7 +16,7 @@ from PIL import Image
 class ActionNormalizedValve(VisionDataset):
     ''' Sprite Dataset
         - sequence
-            - train: 2000
+            - train: 2200
             - test : 200
         - step              : 25
         - image size        : (3, 64, 64)
@@ -45,8 +45,8 @@ class ActionNormalizedValve(VisionDataset):
         """
         指定したディレクトリ内の画像ファイルのパス一覧を取得する。
         """
-        if self.train: img_dir = img_dir + "/ActionNormalizedValve/dataset_202210221514_valve2000_train/"
-        else         : img_dir = img_dir + "/ActionNormalizedValve/dataset_20221022153117_valve200_test/"
+        if self.train: img_dir = img_dir + "/ActionNormalizedValve/dataset_202211723404_valve_train2200/"
+        else         : img_dir = img_dir + "/ActionNormalizedValve/dataset_202211801247_valve_valid200/"
         img_dir = Path(img_dir)
         img_paths = [p for p in img_dir.iterdir() if p.suffix == ".db"]
         img_paths = natsorted(img_paths)
