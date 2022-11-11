@@ -1,3 +1,4 @@
+import copy
 import cv2
 from torch.utils.data import Dataset
 from torchvision.datasets import VisionDataset
@@ -67,7 +68,9 @@ class Sprite(VisionDataset):
         ### img, state, ctrl = load(~)
         ### return img["canonical"], img[""]
         # print("min. max = [{}, {}]".format(img.min(), img.max()))
-        return index, img
+        img_torch_can = copy.deepcopy(img)
+        img_torch_ran = copy.deepcopy(img)
+        return index, img_torch_can, img_torch_ran
 
 
     def __len__(self):

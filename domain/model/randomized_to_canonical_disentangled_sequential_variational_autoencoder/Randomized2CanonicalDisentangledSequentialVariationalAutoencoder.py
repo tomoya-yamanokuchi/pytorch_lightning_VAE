@@ -22,8 +22,8 @@ class Randomized2CanonicalDisentangledSequentialVariationalAutoencoder(nn.Module
                  **kwargs) -> None:
         super().__init__()
         self.frame_encoder        = FrameEncoder(in_channels, **network.frame_encoder)
-        self.content_encoder      = ContentEncoder(network.frame_encoder.conv_fc_out_dims[-1], **network.content_encoder)
-        self.motion_encoder       = MotionEncoder(network.frame_encoder.conv_fc_out_dims[-1], **network.motion_encoder)
+        self.content_encoder      = ContentEncoder(network.frame_encoder.latent_frame_dim, **network.content_encoder)
+        self.motion_encoder       = MotionEncoder(network.frame_encoder.latent_frame_dim, **network.motion_encoder)
         self.latent_frame_decoder = LatentFrameDecoder(network.content_encoder.content_dim + network.motion_encoder.state_dim, **network.latent_frame_decoder)
         self.frame_decoder        = FrameDecoder(network.latent_frame_decoder.fc_out_dims[-1], **network.frame_decoder)
         self.dynamics_model       = DynamicsModel(**network.dynamics_model)
@@ -32,19 +32,26 @@ class Randomized2CanonicalDisentangledSequentialVariationalAutoencoder(nn.Module
 
     def forward(self, img_ran: Tensor, **kwargs) -> List[Tensor]:
         num_batch, step, channle, width, height = img_ran.shape
-        a_mean_encoded, a_logvar_encoded, a_sample_encoded  = self.frame_encoder(img_ran) # shape = [num_batch, step, conv_fc_out_dims[-1]]
+        '''
+            encode
+        '''
+        a_mean_encoded, a_logvar_encoded, a_sample_encoded  = self.frame_encoder(img_ran)   # shape = [num_batch, step, conv_fc_out_dims[-1]]
         # context:
-        f_mean, f_logvar, f_sample   = self.content_encoder(a_sample_encoded)          # both shape = [num_batch, context_dim]
+        f_mean, f_logvar, f_sample   = self.content_encoder(a_sample_encoded)               # shape = [num_batch, context_dim]
         f_mean_prior                 = self.content_prior.mean(f_mean)
         f_logvar_prior               = self.content_prior.logvar(f_logvar)
         # dynamical state:
         z_mean, z_logvar, z_sample   = self.motion_encoder(a_sample_encoded)  # both shape = [num_batch, step, state_dim]
         z_mean_prior, z_logvar_prior = self.dynamics_model(num_batch, step, device=img_ran.device)
+        '''
+            decode
+        '''
         # latent frame decode
         a_mean_decoded, a_logvar_decoded, a_sample_decoded = self.latent_frame_decoder(torch.cat((z_sample, f_sample.unsqueeze(1).expand(num_batch, step, -1)), dim=2))
-        # import ipdb; ipdb.set_trace()
         # image reconstruction
         x_recon                      = self.frame_decoder(a_sample_encoded)
+
+
         return  {
             "f_mean"          : f_mean,
             "f_logvar"        : f_logvar,
@@ -71,14 +78,9 @@ class Randomized2CanonicalDisentangledSequentialVariationalAutoencoder(nn.Module
 
 
     def decode(self, z, f):
-        '''
-        input:
-            - z: shape = []
-            - f: shape = []
-        '''
-        num_batch = 1
-        step      = 1
-        x_recon   = self.frame_decoder(torch.cat((z, f.unsqueeze(1).expand(num_batch, step, -1)), dim=2))
+        num_batch, step, _   = z.shape
+        a_mean_decoded, _, _ = self.latent_frame_decoder(torch.cat((z, f.unsqueeze(1).expand(num_batch, step, -1)), dim=2))
+        x_recon              = self.frame_decoder(a_mean_decoded)
         return x_recon
 
 

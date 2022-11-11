@@ -19,7 +19,11 @@ import numpy as np
 test = TestModel(
     # config_dir  = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/DSVAE/version_205",
     # config_dir  = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/DSVAE/version_202",
-    config_dir  = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/R2C-DSVAE/version_28",
+    # config_dir  = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/R2C-DSVAE/version_28",
+    # config_dir  = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/R2C-DSVAE/version_32",
+    # config_dir  = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/R2C-DSVAE/version_34",
+    config_dir  = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/R2C-DSVAE/version_36",
+    # checkpoints = "epoch=199.ckpt"
     checkpoints = "last.ckpt"
 )
 device     = test.device
@@ -32,11 +36,11 @@ index, img_batch_can, img_batch_ran = next(iter_dataloader)
 assert index[0] == 0
 
 # ----------------------------
-test_index1 = 0  # 黒髪左歩き
-test_index2 = 16 # 緑髪右歩き
+test_index1 = 17  # 黒髪左歩き
+test_index2 = 27 # 緑髪右歩き
 
-test_index1 = 0  # 黒髪左歩き
-test_index2 = 12 # 緑髪右歩き
+# test_index1 = 0  # 黒髪左歩き
+# test_index2 = 12 # 緑髪右歩き
 # ----------------------------
 
 img_seq1    = img_batch_can[test_index1].unsqueeze(dim=0).to(device)
@@ -47,6 +51,7 @@ return_dict_seq2 = model(img_seq2)
 
 x_recon1 = model.decode(return_dict_seq1["z_mean"], return_dict_seq1["f_mean"])
 x_recon2 = model.decode(return_dict_seq2["z_mean"], return_dict_seq2["f_mean"])
+
 
 x_recon_z2_f1 = model.decode(return_dict_seq2["z_mean"], return_dict_seq1["f_mean"])
 x_recon_z1_f2 = model.decode(return_dict_seq1["z_mean"], return_dict_seq2["f_mean"])

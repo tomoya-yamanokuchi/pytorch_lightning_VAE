@@ -15,6 +15,7 @@ class FrameEncoder(nn.Module):
                  in_channels      : int,
                  conv_out_channels: List[int],
                  conv_fc_out_dims : List[int],
+                 latent_frame_dim : int,
                  **kwargs) -> None:
         super().__init__()
 
@@ -34,20 +35,24 @@ class FrameEncoder(nn.Module):
         # ------------ Linear (mean) ------------
         modules = nn.ModuleList()
         in_dim  = np.prod(self.summary_conv_out.summary_list[-1].output_size)
+        _in_dim = copy.deepcopy(in_dim)
         for out_dim in conv_fc_out_dims:
             modules.append(LinearUnit(in_dim, out_dim))
             in_dim = out_dim
+        modules.append(nn.Linear(in_dim, latent_frame_dim))
         self.mean         = nn.Sequential(*modules)
-        self.summary_mean = torchinfo.summary(self.mean, input_size=(1, conv_fc_out_dims[0]))
+        self.summary_mean = torchinfo.summary(self.mean, input_size=(1, _in_dim))
 
         # ------------ Linear (logvar) ------------
         modules = nn.ModuleList()
         in_dim  = np.prod(self.summary_conv_out.summary_list[-1].output_size)
+        _in_dim = copy.deepcopy(in_dim)
         for out_dim in conv_fc_out_dims:
             modules.append(LinearUnit(in_dim, out_dim))
             in_dim = out_dim
+        modules.append(nn.Linear(in_dim, latent_frame_dim))
         self.logvar         = nn.Sequential(*modules)
-        self.summary_logvar = torchinfo.summary(self.logvar, input_size=(1, conv_fc_out_dims[0]))
+        self.summary_logvar = torchinfo.summary(self.logvar, input_size=(1, _in_dim))
 
 
 

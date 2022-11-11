@@ -2,37 +2,39 @@ name             : r2c-dsvae
 in_channels      : 3
 
 network:
-  # Frame Encoder
+  # Frame Encoder q(a|x)
   frame_encoder:
     conv_out_channels: [32, 64, 128, 256]
     conv_fc_out_dims : [4096, 2048, 128]
+    latent_frame_dim : 32
 
-  # Content Encoder
+  # Content Encoder q(f|a)
   content_encoder:
     lstm_hidden_dim  : 512
-    content_dim      : 64
+    fc_hidden_dims   : [512, 128]
+    content_dim      : 16
 
-  # Motion Encoder
+  # Motion Encoder q(z|a)
   motion_encoder:
-    hidden_dim : 512
-    state_dim  : 16
+    hidden_dims : [512, 128]
+    state_dim   : 12
 
-  # Latent Frame Decoder
+  # Latent Frame Decoder q(a|z,f)
   latent_frame_decoder:
     # *********************************
     # in_dim : state_dim + content_dim
     # *********************************
-    fc_out_dims : [512, 512, 512, 128]
+    fc_out_dims : [512, 512, 128, 32]
 
-  # Frame Decoder
+  # Frame Decoder q(x|a)
   frame_decoder:
     deconv_fc_out_dims : [128, 2048, 4096]
     deconv_in_channel  : 256
     deconv_out_channels: [128, 128, 64, 32]
 
-  # DynamicsModel
+  # DynamicsModel p(z)
   dynamics_model:
-    state_dim  : 16
+    state_dim  : 12
     hidden_dim : 512
 
 
@@ -40,5 +42,5 @@ loss_weight:
   recon_loss                       : 1.0
   latent_frame_entropy             : 1.0
   latent_frame_decode_loglikelihood: 1.0
-  kld_content                      : 5.0
+  kld_content                      : 1.0
   kld_motion                       : 1.0

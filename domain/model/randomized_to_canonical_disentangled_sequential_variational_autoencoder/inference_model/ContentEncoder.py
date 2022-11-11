@@ -1,3 +1,4 @@
+import copy
 import torch
 import torchinfo
 from torch import Tensor
@@ -7,10 +8,12 @@ import numpy as np
 from custom.layer.LinearUnit import LinearUnit
 from custom.utility.reparameterize import reparameterize
 
+
 class ContentEncoder(nn.Module):
     def __init__(self,
                  in_dim           : int,
                  lstm_hidden_dim  : List[int],
+                 fc_hidden_dims   : List[int],
                  content_dim      : int,
                  **kwargs) -> None:
         super().__init__()
@@ -24,9 +27,28 @@ class ContentEncoder(nn.Module):
             batch_first   = True,
         )
         self.summary = torchinfo.summary(self.lstm_out, input_size=(131, in_dim))
+
         # ------------ fc layer ------------
-        self.context_mean   = LinearUnit(lstm_hidden_dim*2, content_dim)
-        self.context_logvar = LinearUnit(lstm_hidden_dim*2, content_dim)
+        modules = nn.ModuleList()
+        in_dim  = lstm_hidden_dim*2
+        _in_dim = copy.deepcopy(in_dim)
+        for out_dim in fc_hidden_dims:
+            modules.append(LinearUnit(in_dim, out_dim))
+            in_dim = out_dim
+        modules.append(nn.Linear(in_dim, content_dim))
+        self.mean         = nn.Sequential(*modules)
+        self.summary_mean = torchinfo.summary(self.mean, input_size=(1, _in_dim))
+
+        # ------------ Linear (logvar) ------------
+        modules = nn.ModuleList()
+        in_dim  = lstm_hidden_dim*2
+        _in_dim = copy.deepcopy(in_dim)
+        for out_dim in fc_hidden_dims:
+            modules.append(LinearUnit(in_dim, out_dim))
+            in_dim = out_dim
+        modules.append(nn.Linear(in_dim, content_dim))
+        self.logvar         = nn.Sequential(*modules)
+        self.summary_logvar = torchinfo.summary(self.logvar, input_size=(1, _in_dim))
         return
 
 
@@ -45,7 +67,7 @@ class ContentEncoder(nn.Module):
         # import ipdb; ipdb.set_trace()
         lstm_out = torch.cat((forward_last_timestep, backward_first_timestep), dim=1)   # shape=[num_batch, lstm_hidden_dim*2]
         # import ipdb; ipdb.set_trace()
-        mean     = self.context_mean(lstm_out)                                          # shape=[num_batch, context_dim]
-        logvar   = self.context_logvar(lstm_out)                                        # shape=[num_batch, context_dim]
+        mean     = self.mean(lstm_out)                                          # shape=[num_batch, context_dim]
+        logvar   = self.logvar(lstm_out)                                        # shape=[num_batch, context_dim]
         sample   = reparameterize(mean, logvar)
         return mean, logvar, sample

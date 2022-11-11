@@ -20,23 +20,21 @@ class LitRandomized2CanonicalDisentangledSequentialVariationalAutoencoder(pl.Lig
                 loss_weight,
                 **kwargs) -> None:
         super().__init__()
+        # import ipdb; ipdb.set_trace()
         self.save_hyperparameters()
+        # import ipdb; ipdb.set_trace()
         self.loss_weight = loss_weight
         self.model       = Randomized2CanonicalDisentangledSequentialVariationalAutoencoder(**kwargs)
-        self.summary = torchinfo.summary(self.model, input_size=(131, 8, 3, 64, 64))
+        self.summary     = torchinfo.summary(self.model, input_size=(131, 8, 3, 64, 64))
         # import ipdb; ipdb.set_trace()
 
 
     def forward(self, input, **kwargs) -> Any:
-        return self.model.forward(input)
+        return self.model.forward(input, **kwargs)
 
 
     def decode(self, z, f):
-        num_batch, step, _   = z.shape
-        a_mean_decoded, _, _ = self.model.latent_frame_decoder(torch.cat((z, f.unsqueeze(1).expand(num_batch, step, -1)), dim=2))
-        x_recon              = self.model.frame_decoder(a_mean_decoded)
-        # import ipdb; ipdb.set_trace()
-        return x_recon
+        return self.model.decode(z, f)
 
 
     def configure_optimizers(self):
