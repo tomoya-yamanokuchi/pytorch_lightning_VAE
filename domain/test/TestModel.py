@@ -7,6 +7,7 @@ from ..datamodule.DataModuleFactory import DataModuleFactory
 
 class TestModel:
     def __init__(self, config_dir: str, checkpoints: str):
+        self.config_dir         = config_dir
         self.config             = OmegaConf.load(config_dir + "/config.yaml")
         self.config.reload.path = config_dir + "/checkpoints/{}".format(checkpoints)
         self.device             = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

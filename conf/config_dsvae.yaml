@@ -20,7 +20,7 @@ experiment:
   manual_seed: 1265
 
 trainer:
-  gpus                : [0]
+  gpus                : [1]
   limit_train_batches : 100
   max_epochs          : 500
 
