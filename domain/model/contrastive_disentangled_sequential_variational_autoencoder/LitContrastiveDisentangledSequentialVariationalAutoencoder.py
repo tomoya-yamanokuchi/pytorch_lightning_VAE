@@ -102,14 +102,16 @@ class LitContrastiveDisentangledSequentialVariationalAutoencoder(pl.LightningMod
             p = pathlib.Path(self.logger.log_dir + "/reconstruction"); p.mkdir(parents=True, exist_ok=True)
             num_batch, step, channel, width, height = img_batch.shape
 
-            save_sequence = 8  # np.minimum(10, mod)
+            save_sequence = 9 # np.minimum(10, mod)
             images        = []
             for n in range(save_sequence):
-                images.append(utils.make_grid(results_dict["x_recon"][n], nrow=step, normalize=True))
-                images.append(utils.make_grid(              img_batch[n], nrow=step, normalize=True))
-                images.append(utils.make_grid(        img_aug_context[n], nrow=step, normalize=True))
-                images.append(utils.make_grid(       img_aug_dynamics[n], nrow=step, normalize=True))
-
+                images_unit = []
+                images_unit.append(utils.make_grid(torch.ones_like(img_batch[n]), nrow=step, padding=2, pad_value=1.0, normalize=False))
+                images_unit.append(utils.make_grid(results_dict["x_recon"][n],    nrow=step, padding=2, pad_value=0.0, normalize=True))
+                images_unit.append(utils.make_grid(              img_batch[n],    nrow=step, padding=2, pad_value=0.0, normalize=True))
+                images_unit.append(utils.make_grid(        img_aug_context[n],    nrow=step, padding=2, pad_value=0.0, normalize=True))
+                images_unit.append(utils.make_grid(       img_aug_dynamics[n],    nrow=step, padding=2, pad_value=0.0, normalize=True))
+                images.append(torch.cat(images_unit, dim=1))
 
             print("\n\n---------------------------------------")
             print(" [img_batch] min. max = [{}, {}]".format(img_batch[1].min(), img_batch[1].max()))
@@ -121,7 +123,9 @@ class LitContrastiveDisentangledSequentialVariationalAutoencoder(pl.LightningMod
                 Plese check if range of img is [0.0, 1.0].
                 Because utils.save_image() assums that tensor image is in range [0.0, 1.0] internally.
             '''
+            # import ipdb; ipdb.set_trace()
             utils.save_image(
-                tensor = torch.cat(images, dim=1),
+                # tensor = torch.cat(images, dim=2),
+                tensor = torch.concat(torch.chunk(torch.cat(images, dim=2), chunks=3, dim=-1), dim=1),
                 fp     = os.path.join(str(p), 'reconstruction_epoch' + str(self.current_epoch)) + name_tag + '.png',
             )
