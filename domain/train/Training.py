@@ -39,8 +39,9 @@ class Training:
         seed = seed_everything(config.experiment.manual_seed, True)
         print("seed: ", seed)
 
+        data            = DataModuleFactory().create(**config.datamodule)
         lit_model_class = ModelFactory().create(config.model.name)
-        lit_model       = lit_model_class(**config.model)
+        lit_model       = lit_model_class(**config.model, num_train=data.num_train)
 
         tb_logger = TensorBoardLogger(
             version  = '[{}]-[{}]-[dim_f={}]-[dim_z={}]-[{}epoch]-[{}]'.format(
@@ -69,5 +70,4 @@ class Training:
             ] + self.additionl_callbacks,
             **config.trainer
         )
-        data = DataModuleFactory().create(**config.datamodule)
         trainer.fit(model=lit_model, datamodule=data)

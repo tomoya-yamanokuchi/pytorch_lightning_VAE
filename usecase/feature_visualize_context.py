@@ -1,12 +1,15 @@
 import copy
 import numpy as np
+import torch
 import sys; import pathlib; p=pathlib.Path(); sys.path.append(str(p.parent.resolve()))
 import sys; import pathlib; p=pathlib.Path(); sys.path.append(str(p.parent.resolve()))
 from domain.test.TestModel import TestModel
 from domain.visualize.vector_heatmap import VectorHeatmap
+from custom.utility.image_converter import torch2numpy
 
 
-log     = "[c-dsvae]-[sprite_aug]-[dim_f=14]-[dim_z=7]-[500epoch]-[20221122171135]"
+log = "[c-dsvae]-[sprite_aug]-[dim_f=14]-[dim_z=7]-[500epoch]-[20221122171135]"
+log = "[c-dsvae]-[sprite_aug]-[dim_f=14]-[dim_z=7]-[500epoch]-[20221122183834]"
 
 # ----------------------------------------------------------------------------------
 model   = "C-DSVAE"
@@ -19,6 +22,8 @@ device     = test.device
 model      = test.load_model()
 dataloader = test.load_dataloader()
 # ----------------------------------------------------------------------------------
+import cv2
+cv2.namedWindow('img', cv2.WINDOW_NORMAL)
 
 vectorHeatmap = VectorHeatmap()
 for index, img_tuple in dataloader:
@@ -33,6 +38,13 @@ for index, img_tuple in dataloader:
         _, dim_f       = _f.shape
         f.append(copy.deepcopy(_f))
 
+    # import ipdb; ipdb.set_trace()
+    images = torch.concat(torch.split(img, 1, dim=0), dim=3).squeeze(0)
+    images = torch.concat(torch.split(images, 1, dim=0), dim=-1).squeeze(0)
+    images = torch2numpy(images)
+    images = cv2.cvtColor(images, cv2.COLOR_RGB2BGR)
+    cv2.imshow("img", images)
+    cv2.waitKey(10)
     # import ipdb; ipdb.set_trace()
     vectorHeatmap.pause_show(np.concatenate(f, axis=0), interval=1)
 

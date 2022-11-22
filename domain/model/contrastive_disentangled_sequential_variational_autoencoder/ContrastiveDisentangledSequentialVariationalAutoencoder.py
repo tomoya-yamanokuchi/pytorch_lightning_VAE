@@ -11,7 +11,8 @@ from .inference_model.DynamicalStateEncoder import DynamicalStateEncoder
 from .generative_model.FrameDecoder import FrameDecoder
 from .generative_model.DynamicsModel import DynamicsModel
 from .generative_model.ContextPrior import ContextPrior
-from .ContrastiveLoss import ContrastiveLoss
+from .loss.ContrastiveLoss import ContrastiveLoss
+from .loss.MutualInformation import MutualInformation
 
 
 class ContrastiveDisentangledSequentialVariationalAutoencoder(nn.Module):
@@ -19,6 +20,7 @@ class ContrastiveDisentangledSequentialVariationalAutoencoder(nn.Module):
                  in_channels: int,
                  network    : OmegaConf,
                  loss       : OmegaConf,
+                 num_train  : int,
                  **kwargs) -> None:
         super().__init__()
         self.frame_encoder           = FrameEncoder(in_channels, **network.frame_encoder)
@@ -30,6 +32,7 @@ class ContrastiveDisentangledSequentialVariationalAutoencoder(nn.Module):
 
         self.weight                  = loss.weight
         self.contrastive_loss        = ContrastiveLoss(**loss.contrastive_loss)
+        self.mutual_information      = MutualInformation(num_train)
 
 
     def forward(self, img: Tensor, **kwargs) -> List[Tensor]:
@@ -114,12 +117,18 @@ class ContrastiveDisentangledSequentialVariationalAutoencoder(nn.Module):
         contrastive_loss_fx = self.contrastive_loss(results_dict["f_mean"], f_mean_aug)
         contrastive_loss_zx = self.contrastive_loss(results_dict["z_mean"].view(num_batch, -1), z_mean_aug.view(num_batch, -1))
 
+        mutual_info_fz      = self.mutual_information(
+            f_dist = (results_dict["f_mean"], results_dict["f_logvar"], results_dict["f_sample"]),
+            z_dist = (results_dict["z_mean"], results_dict["z_logvar"], results_dict["z_sample"]),
+        )
+
         # to be minimized
         loss =    recon_loss \
-                + self.weight.kld_context         * kld_context \
-                + self.weight.kld_dynamics        * kld_dynamics \
-                - self.weight.contrastive_loss_fx * contrastive_loss_fx \
-                - self.weight.contrastive_loss_zx * contrastive_loss_zx
+                + self.weight.kld_context           * kld_context \
+                + self.weight.kld_dynamics          * kld_dynamics \
+                - self.weight.contrastive_loss_fx   * contrastive_loss_fx \
+                - self.weight.contrastive_loss_zx   * contrastive_loss_zx \
+                + self.weight.mutual_information_fz * mutual_info_fz
 
         return {
             'loss'                     : loss,
@@ -128,4 +137,5 @@ class ContrastiveDisentangledSequentialVariationalAutoencoder(nn.Module):
             'kld_dynamics'             : kld_dynamics,
             'contrastive_loss_context' : contrastive_loss_fx,
             'contrastive_loss_dynamics': contrastive_loss_zx,
+            'mutual_information_fz'    : mutual_info_fz
         }
