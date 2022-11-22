@@ -16,11 +16,9 @@ from custom.utility.image_converter import torch2numpy
 
 class LitDisentangledSequentialVariationalAutoencoder(pl.LightningModule):
     def __init__(self,
-                kld_weight,
                 **kwargs) -> None:
         super().__init__()
         self.save_hyperparameters()
-        self.kld_weight = kld_weight
         self.model = DisentangledSequentialVariationalAutoencoder(**kwargs)
         # self.summary = torchinfo.summary(self.model, input_size=(131, 8, 3, 64, 64))
 
@@ -52,53 +50,66 @@ class LitDisentangledSequentialVariationalAutoencoder(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         # print("batch_idx: ", batch_idx)
-        index, img_batch = batch
-        results_dict     = self.model.forward(img_batch)
-        loss             = self.model.loss_function(
-            **results_dict,
-            x         = img_batch,
-            M_N       = self.kld_weight,
-            batch_idx = batch_idx
+        index, img, img_aug_context, img_aug_dynamics = batch
+
+        results_dict              = self.model.forward(img)
+        results_dict_aug_context  = self.model.forward(img_aug_context)
+        results_dict_aug_dynamics = self.model.forward(img_aug_dynamics)
+
+        loss = self.model.loss_function(
+            x                         = img,
+            batch_idx                 = batch_idx,
+            results_dict              = results_dict,
+            results_dict_aug_context  = results_dict_aug_context,
+            results_dict_aug_dynamics = results_dict_aug_dynamics,
         )
         # self.save_progress(img_batch, results_dict)
-        self.log("val_loss", loss["loss"])
+        self.log("train_loss", loss["loss"])
         self.log_dict({key: val.item() for key, val in loss.items()}, sync_dist=True)
         return loss['loss']
 
 
     def validation_step(self, batch, batch_idx):
-        index, img_batch = batch  # shape = [num_batch, step, channel, w, h], Eg.) [128, 8, 3, 64, 64])
-        results_dict     = self.model.forward(img_batch)
-        loss             = self.model.loss_function(
-            **results_dict,
-            x         = img_batch,
-            M_N       = self.kld_weight,
-            batch_idx = batch_idx
+        index, img, img_aug_context, img_aug_dynamics = batch  # shape = [num_batch, step, channel, w, h], Eg.) [128, 8, 3, 64, 64])
+
+        results_dict              = self.model.forward(img)
+        results_dict_aug_context  = self.model.forward(img_aug_context)
+        results_dict_aug_dynamics = self.model.forward(img_aug_dynamics)
+
+        loss = self.model.loss_function(
+            x                         = img,
+            batch_idx                 = batch_idx,
+            results_dict              = results_dict,
+            results_dict_aug_context  = results_dict_aug_context,
+            results_dict_aug_dynamics = results_dict_aug_dynamics,
         )
         self.log("val_loss", loss["loss"])
         if batch_idx == 0:
-            self.save_progress(img_batch, results_dict)
+            self.save_progress(img, results_dict)
 
 
-    def save_progress(self, img_batch, results_dict: dict):
+    def save_progress(self, img_batch, results_dict: dict, name_tag: str=""):
         if pathlib.Path(self.logger.log_dir).exists():
             p = pathlib.Path(self.logger.log_dir + "/reconstruction"); p.mkdir(parents=True, exist_ok=True)
             num_batch, step, channel, width, height = img_batch.shape
 
-            # cv2.imshow("img", torch2numpy(img_batch[0, 0]) / 255. )
-            # cv2.imshow("img", torch2numpy(results_dict["x_recon"][0, 0]) / 255. )
-            # cv2.waitKey(100)
-            # import ipdb; ipdb.set_trace()
-
             save_sequence = 8  # np.minimum(10, mod)
             images        = []
-            permute       = [2, 1, 0] # BGR --> RGB for accurate save using PIL
             for n in range(save_sequence):
-                images.append(utils.make_grid(results_dict["x_recon"][n], nrow=step))
-                images.append(utils.make_grid(              img_batch[n], nrow=step))
+                images.append(utils.make_grid(results_dict["x_recon"][n], nrow=step, normalize=True))
+                images.append(utils.make_grid(              img_batch[n], nrow=step, normalize=True))
+
+            print("\n\n---------------------------------------")
+            print(" [img_batch] min. max = [{}, {}]".format(img_batch[1].min(), img_batch[1].max()))
+            print(" [  images ] min. max = [{}, {}]".format(   images[1].min(),    images[1].max()))
+            print("---------------------------------------\n\n")
 
             # save input and reconstructed images
+            '''
+                Plese check if range of img is [0.0, 1.0].
+                Because utils.save_image() assums that tensor image is in range [0.0, 1.0] internally.
+            '''
             utils.save_image(
                 tensor = torch.cat(images, dim=1),
-                fp     = os.path.join(str(p), 'reconstruction_epoch' + str(self.current_epoch)) + '.png',
+                fp     = os.path.join(str(p), 'reconstruction_epoch' + str(self.current_epoch)) + name_tag + '.png',
             )

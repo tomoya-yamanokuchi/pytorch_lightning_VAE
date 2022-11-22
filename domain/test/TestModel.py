@@ -19,7 +19,7 @@ class TestModel:
         # print(lit_model.model.state_dict()["frame_decoder.deconv_fc.0.model.1.weight"])
         return lit_model.eval().cuda(self.device)
 
-    def load_dataloader(self):
+    def load_dataloader(self, stage="test"):
         datamodule = DataModuleFactory().create(**self.config.datamodule)
-        datamodule.setup(stage="test")
+        datamodule.setup(stage=stage)
         return datamodule.test_dataloader()

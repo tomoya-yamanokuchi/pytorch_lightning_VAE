@@ -1,5 +1,6 @@
 from .mnist.MNISTDataModule import MNISTDataModule
 from .sprite.SpriteDataModule import SpriteDataModule
+from .sprite_augmentation.SpriteAugmentationDataModule import SpriteAugmentationDataModule
 from .robel_claw_valve.ActionNormalizedValveDataModule import ActionNormalizedValveDataModule
 
 
@@ -12,5 +13,6 @@ class DataModuleFactory:
         name = name.lower()
         if   name == "mnist"            : return MNISTDataModule(data_dir)
         elif name == "sprite"           : return SpriteDataModule(data_dir)
+        elif name == "sprite_aug"       : return SpriteAugmentationDataModule(data_dir)
         elif name == "action_norm_valve": return ActionNormalizedValveDataModule(data_dir)
         else: NotImplementedError()

@@ -10,12 +10,12 @@ network:
   # Context Encoder
   context_encoder:
     lstm_hidden_dim  : 512
-    context_dim      : 64
+    context_dim      : 12
 
   # DynamicalState Encoder
   dynamical_state_encoder:
     hidden_dim : 512
-    state_dim  : 16
+    state_dim  : 5
 
   # Frame Decoder
   frame_decoder:
@@ -25,8 +25,17 @@ network:
 
   # DynamicsModel
   dynamics_model:
-    state_dim  : 16
+    state_dim  : 5
     hidden_dim : 512
 
-latent_dim       : 2
-kld_weight       : 0.0001
+
+loss:
+  contrastive_loss:
+    tau      : 0.5
+    normalize: True
+
+  weight:
+    kld_context        : 1.0
+    kld_dynamics       : 1.0
+    contrastive_loss_fx: 10.0
+    contrastive_loss_zx: 10.0

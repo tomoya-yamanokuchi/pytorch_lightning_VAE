@@ -11,13 +11,14 @@ from .inference_model.DynamicalStateEncoder import DynamicalStateEncoder
 from .generative_model.FrameDecoder import FrameDecoder
 from .generative_model.DynamicsModel import DynamicsModel
 from .generative_model.ContextPrior import ContextPrior
-
+from .ContrastiveLoss import ContrastiveLoss
 
 
 class DisentangledSequentialVariationalAutoencoder(nn.Module):
     def __init__(self,
                  in_channels: int,
                  network    : OmegaConf,
+                 loss       : OmegaConf,
                  **kwargs) -> None:
         super().__init__()
         self.frame_encoder           = FrameEncoder(in_channels, **network.frame_encoder)
@@ -26,6 +27,9 @@ class DisentangledSequentialVariationalAutoencoder(nn.Module):
         self.frame_decoder           = FrameDecoder(network.context_encoder.context_dim + network.dynamical_state_encoder.state_dim, **network.frame_decoder)
         self.dynamics_model          = DynamicsModel(**network.dynamics_model)
         self.context_prior           = ContextPrior(network.context_encoder.context_dim)
+
+        self.weight                  = loss.weight
+        self.contrastive_loss        = ContrastiveLoss(**loss.contrastive_loss)
 
 
     def forward(self, img: Tensor, **kwargs) -> List[Tensor]:
@@ -80,23 +84,48 @@ class DisentangledSequentialVariationalAutoencoder(nn.Module):
 
 
     def loss_function(self,
-                      **kwargs) -> dict:
+                        x                        ,
+                        batch_idx                ,
+                        results_dict             ,
+                        results_dict_aug_context ,
+                        results_dict_aug_dynamics,
+                        **kwargs) -> dict:
         # reconstruction likelihood:
-        recon_loss   = F.mse_loss(kwargs["x_recon"], kwargs["x"], reduction='sum')
+        recon_loss   = F.mse_loss(results_dict["x_recon"], x, reduction='sum')
         # context distribution:
-        qf           = self.define_normal_distribution(mean=kwargs["f_mean"], logvar=kwargs["f_logvar"])
-        pf           = self.define_normal_distribution(mean=kwargs["f_mean_prior"], logvar=kwargs["f_logvar_prior"])
-        kld_context  = self.kl_reverse(q=qf, p=pf, q_sample=kwargs["f_sample"])
+        qf           = self.define_normal_distribution(mean=results_dict["f_mean"], logvar=results_dict["f_logvar"])
+        pf           = self.define_normal_distribution(mean=results_dict["f_mean_prior"], logvar=results_dict["f_logvar_prior"])
+        kld_context  = self.kl_reverse(q=qf, p=pf, q_sample=results_dict["f_sample"])
         # dynamical state distribution:
-        qz           = self.define_normal_distribution(mean=kwargs["z_mean"], logvar=kwargs["z_logvar"])
-        pz           = self.define_normal_distribution(mean=kwargs["z_mean_prior"], logvar=kwargs["z_logvar_prior"])
-        kld_dynamics = self.kl_reverse(q=qz, p=pz, q_sample=kwargs["z_sample"])
+        qz           = self.define_normal_distribution(mean=results_dict["z_mean"], logvar=results_dict["z_logvar"])
+        pz           = self.define_normal_distribution(mean=results_dict["z_mean_prior"], logvar=results_dict["z_logvar_prior"])
+        kld_dynamics = self.kl_reverse(q=qz, p=pz, q_sample=results_dict["z_sample"])
+        # mutual information
+        num_batch   = x.shape[0]
 
-        loss = recon_loss + kld_context + kld_dynamics
+        # ---------------------------------------
+        '''
+            ⇩　contrastive_loss　の計算が回るようになったら
+                augmentation をちゃんと作って計算する
+        '''
+        f_mean_aug = results_dict_aug_context["f_mean"]
+        z_mean_aug = results_dict_aug_dynamics["z_mean"]
+        # ---------------------------------------
+        contrastive_loss_fx = self.contrastive_loss(results_dict["f_mean"], f_mean_aug)
+        contrastive_loss_zx = self.contrastive_loss(results_dict["z_mean"].view(num_batch, -1), z_mean_aug.view(num_batch, -1))
+
+        # to be minimized
+        loss =    recon_loss \
+                + self.weight.kld_context         * kld_context \
+                + self.weight.kld_dynamics        * kld_dynamics \
+                - self.weight.contrastive_loss_fx * contrastive_loss_fx \
+                - self.weight.contrastive_loss_zx * contrastive_loss_zx
 
         return {
-            'loss'         : loss,
-            'recon_loss'   : recon_loss,
-            'kld_context'  : kld_context,
-            'kld_dynamics' : kld_dynamics,
+            'loss'                     : loss,
+            'recon_loss'               : recon_loss,
+            'kld_context'              : kld_context,
+            'kld_dynamics'             : kld_dynamics,
+            'contrastive_loss_context' : contrastive_loss_fx,
+            'contrastive_loss_dynamics': contrastive_loss_zx,
         }
