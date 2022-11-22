@@ -18,8 +18,9 @@ from domain.visualize.vector_heatmap import VectorHeatmap
 test = TestModel(
     # config_dir  = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/DSVAE/version_205",
     # config_dir  = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/DSVAE/version_202",
-    config_dir  = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/DSVAE/version_235",
+    # config_dir  = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/DSVAE/version_235",
     # config_dir  = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/DSVAE/version_232",
+    config_dir  = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/DSVAE/version_306",
     checkpoints = "last.ckpt"
 )
 device     = test.device
@@ -28,20 +29,20 @@ dataloader = test.load_dataloader()
 
 
 iter_dataloader = iter(dataloader)
-index, batch,   = next(iter_dataloader)
+index, img, img_aug_context, img_aug_dynamics  = next(iter_dataloader)
 assert index[0] == 0
 
 
 f = []
-for test_index in range(len(batch)):
-    img_seq     = batch[test_index].unsqueeze(dim=0).to(device)
+for test_index in range(len(img)):
+    img_seq     = img[test_index].unsqueeze(dim=0).to(device)
     return_dict = model(img_seq)
     _f          = return_dict["f_mean"].to("cpu").numpy()
     _z          = return_dict["z_mean"].to("cpu").numpy()
     print(_z)
     f.append(copy.deepcopy(_f))
 
-import ipdb; ipdb.set_trace()
+# import ipdb; ipdb.set_trace()
 vectorHeatmap = VectorHeatmap()
 vectorHeatmap.pause_show(np.concatenate(f, axis=0), interval=-1)
 

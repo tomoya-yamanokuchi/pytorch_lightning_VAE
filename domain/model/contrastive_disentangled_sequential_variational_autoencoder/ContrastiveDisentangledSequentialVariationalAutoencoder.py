@@ -14,7 +14,7 @@ from .generative_model.ContextPrior import ContextPrior
 from .ContrastiveLoss import ContrastiveLoss
 
 
-class DisentangledSequentialVariationalAutoencoder(nn.Module):
+class ContrastiveDisentangledSequentialVariationalAutoencoder(nn.Module):
     def __init__(self,
                  in_channels: int,
                  network    : OmegaConf,

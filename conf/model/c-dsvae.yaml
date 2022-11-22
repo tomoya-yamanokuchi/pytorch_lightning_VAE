@@ -1,4 +1,4 @@
-name             : dsvae_lite
+name             : c-dsvae
 in_channels      : 3
 
 network:
@@ -10,12 +10,12 @@ network:
   # Context Encoder
   context_encoder:
     lstm_hidden_dim  : 512
-    context_dim      : 12
+    context_dim      : 14
 
   # DynamicalState Encoder
   dynamical_state_encoder:
     hidden_dim : 512
-    state_dim  : 5
+    state_dim  : 7
 
   # Frame Decoder
   frame_decoder:
@@ -25,7 +25,7 @@ network:
 
   # DynamicsModel
   dynamics_model:
-    state_dim  : 5
+    state_dim  : 7
     hidden_dim : 512
 
 

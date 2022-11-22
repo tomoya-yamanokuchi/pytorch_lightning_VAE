@@ -1,5 +1,5 @@
 defaults:
-  - model    : dsvae_lite
+  - model    : c-dsvae
   # - model    : dsvae_valve
   - raytune  : async_with_optuna
   - notify   : slack
@@ -14,13 +14,13 @@ datamodule:
 
 logger:
   save_dir: "logs/"
-  name    : "DSVAE"
+  name    : "C-DSVAE"
 
 experiment:
   manual_seed: 1265
 
 trainer:
-  gpus                : [1]
+  gpus                : [0]
   limit_train_batches : 100
   max_epochs          : 500
 

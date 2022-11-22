@@ -30,7 +30,7 @@ dataloader = test.load_dataloader()
 step       = 25
 num_slice  = 1
 
-for index, img_batch in dataloader:
+for index, img_batch, img_aug_context, img_aug_dynamicstch in dataloader:
     # import ipdb; ipdb.set_trace()
     for test_index in range(len(img_batch)):
     # for test_index in range(1):
@@ -54,6 +54,7 @@ for index, img_batch in dataloader:
             '''
             dynamic info
             '''
+            z += torch.randn_like(z) * 0.5
             # ========= 232 =============
             # z[:, :, 6] += torch.randn_like(z[:, :, 6])*2.0
             # z[:, :, 7] += torch.randn_like(z[:, :, 7])*2.0
@@ -78,7 +79,7 @@ for index, img_batch in dataloader:
             # f[:, 49:] += torch.randn_like(f[:, 49:])
 
             # ========= 235 =============
-            f += torch.randn_like(f) * 0.5
+            # f += torch.randn_like(f) * 0.5
             # f[:, 1] += torch.randn_like(f[:, 1])
             # f[:, 2] += torch.randn_like(f[:, 2])
             # f[:, 6] += torch.randn_like(f[:, 6]) # <  >

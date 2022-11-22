@@ -1,5 +1,6 @@
 import os
 import copy
+import datetime
 import sys; import pathlib; p=pathlib.Path(); sys.path.append(str(p.parent.resolve()))
 from domain.model.ModelFactory import ModelFactory
 from domain.datamodule.DataModuleFactory import DataModuleFactory
@@ -40,8 +41,19 @@ class Training:
 
         lit_model_class = ModelFactory().create(config.model.name)
         lit_model       = lit_model_class(**config.model)
-        tb_logger       = TensorBoardLogger(**config.logger)
-        p               = pathlib.Path(tb_logger.log_dir)
+
+        tb_logger = TensorBoardLogger(
+            version  = '[{}]-[{}]-[dim_f={}]-[dim_z={}]-[{}epoch]-[{}]'.format(
+                config.model.name,
+                config.datamodule.name,
+                config.model.network.context_encoder.context_dim,
+                config.model.network.dynamical_state_encoder.state_dim,
+                config.trainer.max_epochs,
+                datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+            ),
+            **config.logger
+        )
+        p = pathlib.Path(tb_logger.log_dir)
         p.mkdir(parents=True, exist_ok=True)
         OmegaConf.save(config, tb_logger.log_dir + "/config.yaml")
 
@@ -57,6 +69,5 @@ class Training:
             ] + self.additionl_callbacks,
             **config.trainer
         )
-
         data = DataModuleFactory().create(**config.datamodule)
         trainer.fit(model=lit_model, datamodule=data)

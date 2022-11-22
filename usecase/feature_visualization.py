@@ -27,14 +27,7 @@ model      = test.load_model()
 dataloader = test.load_dataloader()
 
 
-# iter_dataloader = iter(dataloader)
-# index, batch,   = next(iter_dataloader)
-
-
-
 vectorHeatmap = VectorHeatmap()
-
-
 for index, img, img_aug_context, img_aug_dynamics in dataloader:
     z = []
     for test_index in range(len(img)):

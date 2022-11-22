@@ -1,7 +1,7 @@
 import sys; import pathlib; p=pathlib.Path(); sys.path.append(str(p.parent.resolve()))
 import hydra
 from omegaconf import DictConfig, OmegaConf
-from Training import Training
+from domain.train.Training import Training
 
 
 # config_name = "config"

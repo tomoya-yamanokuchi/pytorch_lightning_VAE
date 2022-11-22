@@ -8,18 +8,18 @@ from torch import Tensor
 from torch import optim
 from typing import List, Any
 import pytorch_lightning as pl
-from .DisentangledSequentialVariationalAutoencoder import DisentangledSequentialVariationalAutoencoder
+from .ContrastiveDisentangledSequentialVariationalAutoencoder import ContrastiveDisentangledSequentialVariationalAutoencoder
 from .. import visualization
 
 import cv2
 from custom.utility.image_converter import torch2numpy
 
-class LitDisentangledSequentialVariationalAutoencoder(pl.LightningModule):
+class LitContrastiveDisentangledSequentialVariationalAutoencoder(pl.LightningModule):
     def __init__(self,
                 **kwargs) -> None:
         super().__init__()
         self.save_hyperparameters()
-        self.model = DisentangledSequentialVariationalAutoencoder(**kwargs)
+        self.model = ContrastiveDisentangledSequentialVariationalAutoencoder(**kwargs)
         # self.summary = torchinfo.summary(self.model, input_size=(131, 8, 3, 64, 64))
 
 
@@ -50,34 +50,34 @@ class LitDisentangledSequentialVariationalAutoencoder(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         # print("batch_idx: ", batch_idx)
-        index, img, img_aug_context, img_aug_dynamics = batch
-
-        results_dict              = self.model.forward(img)
-        results_dict_aug_context  = self.model.forward(img_aug_context)
-        results_dict_aug_dynamics = self.model.forward(img_aug_dynamics)
+        index, img_tuple          = batch
+        assert len(img_tuple) == 3
+        results_dict              = self.model.forward(img_tuple[0]) # original
+        results_dict_aug_context  = self.model.forward(img_tuple[1]) # augment context
+        results_dict_aug_dynamics = self.model.forward(img_tuple[2]) # augment dynamics
 
         loss = self.model.loss_function(
-            x                         = img,
+            x                         = img_tuple[0],
             batch_idx                 = batch_idx,
             results_dict              = results_dict,
             results_dict_aug_context  = results_dict_aug_context,
             results_dict_aug_dynamics = results_dict_aug_dynamics,
         )
         # self.save_progress(img_batch, results_dict)
-        self.log("train_loss", loss["loss"])
+        self.log("val_loss", loss["loss"])
         self.log_dict({key: val.item() for key, val in loss.items()}, sync_dist=True)
         return loss['loss']
 
 
     def validation_step(self, batch, batch_idx):
-        index, img, img_aug_context, img_aug_dynamics = batch  # shape = [num_batch, step, channel, w, h], Eg.) [128, 8, 3, 64, 64])
-
-        results_dict              = self.model.forward(img)
-        results_dict_aug_context  = self.model.forward(img_aug_context)
-        results_dict_aug_dynamics = self.model.forward(img_aug_dynamics)
+        index, img_tuple          = batch  # shape = [num_batch, step, channel, w, h], Eg.) [128, 8, 3, 64, 64])
+        assert len(img_tuple) == 3
+        results_dict              = self.model.forward(img_tuple[0]) # original
+        results_dict_aug_context  = self.model.forward(img_tuple[1]) # augment context
+        results_dict_aug_dynamics = self.model.forward(img_tuple[2]) # augment dynamics
 
         loss = self.model.loss_function(
-            x                         = img,
+            x                         = img_tuple[0],
             batch_idx                 = batch_idx,
             results_dict              = results_dict,
             results_dict_aug_context  = results_dict_aug_context,
@@ -85,10 +85,19 @@ class LitDisentangledSequentialVariationalAutoencoder(pl.LightningModule):
         )
         self.log("val_loss", loss["loss"])
         if batch_idx == 0:
-            self.save_progress(img, results_dict)
+            self.save_progress(
+                *img_tuple,
+                results_dict,
+            )
 
 
-    def save_progress(self, img_batch, results_dict: dict, name_tag: str=""):
+    def save_progress(self,
+                      img_batch,
+                      img_aug_context,
+                      img_aug_dynamics,
+                      results_dict: dict,
+                      name_tag: str=""):
+
         if pathlib.Path(self.logger.log_dir).exists():
             p = pathlib.Path(self.logger.log_dir + "/reconstruction"); p.mkdir(parents=True, exist_ok=True)
             num_batch, step, channel, width, height = img_batch.shape
@@ -98,6 +107,9 @@ class LitDisentangledSequentialVariationalAutoencoder(pl.LightningModule):
             for n in range(save_sequence):
                 images.append(utils.make_grid(results_dict["x_recon"][n], nrow=step, normalize=True))
                 images.append(utils.make_grid(              img_batch[n], nrow=step, normalize=True))
+                images.append(utils.make_grid(        img_aug_context[n], nrow=step, normalize=True))
+                images.append(utils.make_grid(       img_aug_dynamics[n], nrow=step, normalize=True))
+
 
             print("\n\n---------------------------------------")
             print(" [img_batch] min. max = [{}, {}]".format(img_batch[1].min(), img_batch[1].max()))

@@ -1,11 +1,12 @@
 import os
 import cv2
 import numpy as np
-from torch.utils.data import Dataset
-from torchvision.datasets import VisionDataset
-import torch
 from pathlib import Path
 from typing import List, Tuple, Optional, Callable
+import torch
+from torchvision import transforms
+from torchvision.datasets import VisionDataset
+
 
 
 class SpriteAugmentation(VisionDataset):
@@ -34,6 +35,8 @@ class SpriteAugmentation(VisionDataset):
         self.min       =  -1.0
         self.max       =   1.0
 
+        self.transform_color_dist   = self.get_transform_color_distortion()
+        self.transform_GaussianBlur = self.get_transform_GaussianBlur()
 
     def _get_img_paths(self, img_dir):
         """
@@ -71,37 +74,69 @@ class SpriteAugmentation(VisionDataset):
 
         img_aug_context  = self.augment_context(img)
         img_aug_dynamics = self.augment_dynamics(img)
-        return index, img, img_aug_context, img_aug_dynamics
+        return index, (img, img_aug_context, img_aug_dynamics)
 
 
     def augment_context(self, img):
         '''
-        The static factor (e.g., the character identity in videos or the speaker in audios) is shared
-        across all the time steps, and should not be affected by the exact order of the frames.
-        We therefore randomly shuffle or simply reverse the order of time steps to generate the content augmentation of
+        - keep  : context
+        - change: dynamics
         '''
         step         = img.shape[0]
         random_index = torch.randperm(step)
         return torch.index_select(img, dim=0, index=random_index)
 
 
+    def normalize(self, x, x_min, x_max, m, M):
+        a = (x - x_min) / (x_max - x_min)
+        return a * (M - m) + m
+
+
     def augment_dynamics(self, img):
         '''
+        - keep  : dynamics
+        - change: context
+
         combination of
             - (cropping)
             - color distortion
             - Gaussian blur
             - reshaping
         '''
-        img = self.color_distortion(img)
-        # img = self.gaussian_blur(img)
+        img = self.normalize(img, x_min=self.min, x_max=self.max, m=0, M=1) # [-1, 1] to [0, 1]
+        # -----------------------------------------------------------------
+        img = self.transform_color_dist(img)
+        img = torch.concat([self.transform_GaussianBlur(_img) for _img in torch.split(img, 1, 0)], dim=0)
+        # -----------------------------------------------------------------
+        img = self.normalize(img, x_min=0, x_max=1, m=self.min, M=self.max) # [0, 1] to [-1, 1]
         return img
 
 
-    def color_distortion(self, img):
-        img = (img - self.min) / (self.max - self.min) # scale to [0, 1]
-        img = torch.Tensor([1.0]) - img                # inverse color (= 255 - original_RGB)
-        return img
+    def get_transform_color_distortion(self, s=1.0):
+        # s is the strength of color distortion.
+        color_jitter = transforms.ColorJitter(
+            brightness = 0.8*s,
+            contrast   = 0.8*s,
+            saturation = 0.8*s,
+            hue        = 0.2*s,
+        )
+        rnd_color_jitter = transforms.RandomApply(transforms=[color_jitter], p=0.8)
+        rnd_gray         = transforms.RandomGrayscale(p=0.2)
+        return transforms.Compose([rnd_color_jitter, rnd_gray])
+
+
+    def get_transform_GaussianBlur(self, kernel_size=(3, 3), sigma=(0.1, 2.0)):
+        '''
+        - kernel_size: set to be 10% of the image height/width
+            (if img_size = (64, 64) -> kernel_size=(7, 7) with odd restriction).
+        - sigma      : randomly sampled from [0.1, 2.0]
+          (Please refere [Ting Chen, et al., ICML2020])
+        '''
+        assert type(kernel_size) == tuple
+        assert type(sigma) == tuple
+        blurrer     = transforms.GaussianBlur(kernel_size, sigma)
+        rnd_blurrer = transforms.RandomApply(transforms=[blurrer], p=0.5)
+        return transforms.Compose([rnd_blurrer])
 
 
 if __name__ == '__main__':
