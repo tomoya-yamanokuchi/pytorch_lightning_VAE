@@ -6,10 +6,10 @@ from .SpriteAugmentation import SpriteAugmentation
 
 
 class SpriteAugmentationDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir: str = "./"):
+    def __init__(self, data_dir: str="./", batch_size: int=128):
         super().__init__()
         self.data_dir   = data_dir
-        self.batch_size = 32
+        self.batch_size = batch_size
 
     def prepare_data(self):
         print("\n\n No implementation for download data \n\n")
