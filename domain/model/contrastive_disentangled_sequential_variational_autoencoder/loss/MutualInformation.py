@@ -67,5 +67,13 @@ class MutualInformation(nn.Module):
         logq_z  = self.logsumexp(_log_qz_tmp.sum(3),  dim=2, keepdim=False) - math.log(num_batch * self.num_train) # [8, 128]
         logq_fz = self.logsumexp(_log_qfz_tmp.sum(3), dim=2, keepdim=False) - math.log(num_batch * self.num_train) # [8, 128]
         # step x num_batc
-        mi_fz   = F.relu(logq_fz - logq_f - logq_z).mean()
+        # # mi_fz   = F.relu(logq_f + logq_z - logq_fz).mean()
+        # mi_fz_origin   = F.relu(logq_fz - logq_f - logq_z).mean()
+
+        Hf    = F.relu(-logq_f).mean()
+        Hz    = F.relu(-logq_z).mean()
+        Hfz   = F.relu(-logq_fz).mean()
+        mi_fz = Hf + Hz - Hfz
+
+        # import ipdb; ipdb.set_trace()
         return mi_fz

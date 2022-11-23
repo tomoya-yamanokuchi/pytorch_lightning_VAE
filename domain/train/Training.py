@@ -41,7 +41,7 @@ class Training:
 
         data            = DataModuleFactory().create(**config.datamodule)
         lit_model_class = ModelFactory().create(config.model.name)
-        lit_model       = lit_model_class(**config.model, num_train=data.num_train)
+        lit_model       = lit_model_class(config, num_train=data.num_train)
 
         tb_logger = TensorBoardLogger(
             version  = '[{}]-[{}]-[dim_f={}]-[dim_z={}]-[{}epoch]-[{}]'.format(

@@ -3,9 +3,9 @@ import sys; import pathlib; p=pathlib.Path(); sys.path.append(str(p.parent.resol
 import numpy as np
 import torchinfo
 import torch
+from torch import optim
 from torchvision import utils
 from torch import Tensor
-from torch import optim
 from typing import List, Any
 import pytorch_lightning as pl
 from .ContrastiveDisentangledSequentialVariationalAutoencoder import ContrastiveDisentangledSequentialVariationalAutoencoder
@@ -16,10 +16,13 @@ from custom.utility.image_converter import torch2numpy
 
 class LitContrastiveDisentangledSequentialVariationalAutoencoder(pl.LightningModule):
     def __init__(self,
-                **kwargs) -> None:
+                 config,
+                 num_train) -> None:
         super().__init__()
         self.save_hyperparameters()
-        self.model = ContrastiveDisentangledSequentialVariationalAutoencoder(**kwargs)
+        self.config    = config
+        self.num_train = num_train
+        self.model     = ContrastiveDisentangledSequentialVariationalAutoencoder(**config.model, num_train=num_train)
         # self.summary = torchinfo.summary(self.model, input_size=(131, 8, 3, 64, 64))
 
 
@@ -44,8 +47,18 @@ class LitContrastiveDisentangledSequentialVariationalAutoencoder(pl.LightningMod
 
 
     def configure_optimizers(self):
-        optimizer = optim.Adam(self.parameters(), lr=1e-3)
-        return optimizer
+        optimizer = optim.Adam(
+            params = self.parameters(),
+            lr     = self.config.optimizer.lr,
+            betas  = tuple(self.config.optimizer.betas)
+        )
+        scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(
+            optimizer = optimizer,
+            eta_min   = 2e-4,
+            T_0       = (self.config.trainer.max_epochs + 1) // 2,
+            T_mult    = 1
+        )
+        return [optimizer,], [scheduler,]
 
 
     def training_step(self, batch, batch_idx):

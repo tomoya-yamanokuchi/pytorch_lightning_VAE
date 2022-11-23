@@ -25,6 +25,10 @@ trainer:
   limit_train_batches : 100
   max_epochs          : 500
 
+optimizer:
+  lr: 0.001
+  betas: [0.9, 0.999]
+
 checkpoint:
   every_n_epochs          : 50
   save_top_k              : -1

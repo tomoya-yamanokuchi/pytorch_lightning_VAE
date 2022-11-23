@@ -9,7 +9,8 @@ cv2.namedWindow('img', cv2.WINDOW_NORMAL)
 
 log = "[c-dsvae]-[sprite_aug]-[dim_f=14]-[dim_z=7]-[500epoch]-[20221122171135]"
 log = "[c-dsvae]-[sprite_aug]-[dim_f=14]-[dim_z=7]-[500epoch]-[20221122175122]"
-
+log = "[c-dsvae]-[sprite_aug]-[dim_f=14]-[dim_z=7]-[500epoch]-[20221122233949]"
+log = "[c-dsvae]-[sprite_aug]-[dim_f=14]-[dim_z=7]-[500epoch]-[20221122233946]"
 # ----------------------------------------------------------------------------------
 model   = "C-DSVAE"
 log_dir = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/{}/".format(model)
@@ -50,6 +51,9 @@ for index, img_tuple in dataloader:
             '''
             # z += torch.randn_like(z)
             # ========= 232 =============
+            # z[:, :, :3] += torch.randn_like(z[:, :, :3])*2.0
+            # z[:, :, 4:6] += torch.randn_like(z[:, :, 4:6])*2.0
+            # z[:, :, 3] += torch.randn_like(z[:, :, 3])*2.0
             # z[:, :, 6] += torch.randn_like(z[:, :, 6])*2.0
             '''
             color info
