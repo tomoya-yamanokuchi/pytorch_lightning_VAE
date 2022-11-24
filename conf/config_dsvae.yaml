@@ -22,7 +22,6 @@ experiment:
 
 trainer:
   gpus                : [0]
-  limit_train_batches : 100
   max_epochs          : 500
 
 optimizer:

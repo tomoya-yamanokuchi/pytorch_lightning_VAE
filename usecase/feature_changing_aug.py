@@ -11,6 +11,9 @@ log = "[c-dsvae]-[sprite_aug]-[dim_f=14]-[dim_z=7]-[500epoch]-[20221122171135]"
 log = "[c-dsvae]-[sprite_aug]-[dim_f=14]-[dim_z=7]-[500epoch]-[20221122175122]"
 log = "[c-dsvae]-[sprite_aug]-[dim_f=14]-[dim_z=7]-[500epoch]-[20221122233949]"
 log = "[c-dsvae]-[sprite_aug]-[dim_f=14]-[dim_z=7]-[500epoch]-[20221122233946]"
+log = "[c-dsvae]-[sprite_aug]-[dim_f=14]-[dim_z=7]-[500epoch]-[20221123204704]"
+log = "[c-dsvae]-[sprite_aug]-[dim_f=14]-[dim_z=7]-[500epoch]-[20221123201940]"
+log = "[c-dsvae]-[sprite_aug]-[dim_f=128]-[dim_z=8]-[1000epoch]-[20221124031555]"
 # ----------------------------------------------------------------------------------
 model   = "C-DSVAE"
 log_dir = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/{}/".format(model)
@@ -51,10 +54,12 @@ for index, img_tuple in dataloader:
             '''
             # z += torch.randn_like(z)
             # ========= 232 =============
-            # z[:, :, :3] += torch.randn_like(z[:, :, :3])*2.0
+            # import ipdb; ipdb.set_trace()
+            # z[:, :, 0] += torch.randn_like(z[:, :, 0])*2.0
+            # z[:, :, 2] += torch.randn_like(z[:, :, 1])*2.0
             # z[:, :, 4:6] += torch.randn_like(z[:, :, 4:6])*2.0
             # z[:, :, 3] += torch.randn_like(z[:, :, 3])*2.0
-            # z[:, :, 6] += torch.randn_like(z[:, :, 6])*2.0
+            z[:, :, 6:] += torch.randn_like(z[:, :, 6:])*2.0
             '''
             color info
             '''
@@ -62,4 +67,4 @@ for index, img_tuple in dataloader:
             # z[:, :, 8:12] += torch.randn_like(z[:, :, 8:12])
             # z[:, :, 13:]  += torch.randn_like(z[:, :, 13:])
 
-            f += torch.randn_like(f)
+            # f += torch.randn_like(f)

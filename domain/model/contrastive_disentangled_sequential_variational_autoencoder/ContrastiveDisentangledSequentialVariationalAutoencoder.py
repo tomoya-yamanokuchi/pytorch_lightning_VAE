@@ -5,11 +5,12 @@ from typing import List
 from torch.nn import functional as F
 from omegaconf.omegaconf import OmegaConf
 
-from .inference_model.FrameEncoder import FrameEncoder
+from .inference_model.frame_encoder.FrameEncoderFactory import FrameEncoderFactory
 from .inference_model.ContextEncoder import ContextEncoder
-from .inference_model.DynamicalStateEncoder import DynamicalStateEncoder
-from .generative_model.FrameDecoder import FrameDecoder
-from .generative_model.DynamicsModel import DynamicsModel
+from .inference_model.motion_encoder.MotionEncoderFactory import MotionEncoderFactory
+from .inference_model.BiLSTMEncoder import BiLSTMEncoder
+from .generative_model.frame_decoder.FrameDecoderFactory import FrameDecoderFactory
+from .generative_model.MotionPrior import MotionPrior
 from .generative_model.ContextPrior import ContextPrior
 from .loss.ContrastiveLoss import ContrastiveLoss
 from .loss.MutualInformation import MutualInformation
@@ -17,36 +18,42 @@ from .loss.MutualInformation import MutualInformation
 
 class ContrastiveDisentangledSequentialVariationalAutoencoder(nn.Module):
     def __init__(self,
-                 in_channels: int,
                  network    : OmegaConf,
                  loss       : OmegaConf,
                  num_train  : int,
                  **kwargs) -> None:
         super().__init__()
-        self.frame_encoder           = FrameEncoder(in_channels, **network.frame_encoder)
-        self.context_encoder         = ContextEncoder(network.frame_encoder.conv_fc_out_dims[-1], **network.context_encoder)
-        self.dynamical_state_encoder = DynamicalStateEncoder(network.frame_encoder.conv_fc_out_dims[-1], **network.dynamical_state_encoder)
-        self.frame_decoder           = FrameDecoder(network.context_encoder.context_dim + network.dynamical_state_encoder.state_dim, **network.frame_decoder)
-        self.dynamics_model          = DynamicsModel(**network.dynamics_model)
-        self.context_prior           = ContextPrior(network.context_encoder.context_dim)
-
-        self.weight                  = loss.weight
-        self.contrastive_loss        = ContrastiveLoss(**loss.contrastive_loss)
-        self.mutual_information      = MutualInformation(num_train)
+        # inference
+        self.frame_encoder      = FrameEncoderFactory().create(**network.frame_encoder)
+        self.bi_lstm_encoder    = BiLSTMEncoder(in_dim=network.frame_encoder.dim_frame_feature, **network.bi_lstm_encoder)
+        self.context_encoder    = ContextEncoder(lstm_hidden_dim=network.bi_lstm_encoder.hidden_dim, **network.context_encoder)
+        self.motion_encoder     = MotionEncoderFactory().create(lstm_hidden_dim=network.bi_lstm_encoder.hidden_dim, **network.motion_encoder)
+        # generate
+        in_dim_decoder          = network.context_encoder.context_dim + network.motion_encoder.state_dim
+        self.frame_decoder      = FrameDecoderFactory().create(**network.frame_decoder, in_dim=in_dim_decoder, out_channels=network.frame_encoder.in_channels)
+        # prior
+        self.context_prior      = ContextPrior(network.context_encoder.context_dim)
+        self.motion_prior       = MotionPrior(**network.motion_prior)
+        # loss
+        self.weight             = loss.weight
+        self.contrastive_loss   = ContrastiveLoss(**loss.contrastive_loss)
+        self.mutual_information = MutualInformation(num_train)
 
 
     def forward(self, img: Tensor, **kwargs) -> List[Tensor]:
         num_batch, step, channle, width, height = img.shape
         encoded_frame                = self.frame_encoder(img)                    # shape = [num_batch, step, conv_fc_out_dims[-1]]
-        # context:
-        f_mean, f_logvar, f_sample   = self.context_encoder(encoded_frame)          # both shape = [num_batch, context_dim]
-        f_mean_prior                 = self.context_prior.mean(f_mean)
-        f_logvar_prior               = self.context_prior.logvar(f_logvar)
-        # dynamical state:
-        z_mean, z_logvar, z_sample   = self.dynamical_state_encoder(encoded_frame)  # both shape = [num_batch, step, state_dim]
-        z_mean_prior, z_logvar_prior = self.dynamics_model(num_batch, step, device=img.device)
+        bi_lstm_out                  = self.bi_lstm_encoder(encoded_frame)
+        # posterior
+        f_mean, f_logvar, f_sample   = self.context_encoder(bi_lstm_out)          # both shape = [num_batch, context_dim]
+        z_mean, z_logvar, z_sample   = self.motion_encoder(bi_lstm_out)  # both shape = [num_batch, step, state_dim]
+        # prior
+        f_mean_prior, f_logvar_prior                 = self.context_prior.dist(f_mean)
+        z_mean_prior, z_logvar_prior, z_sample_prior = self.motion_prior(z_sample)
+
         # image reconstruction
-        x_recon                      = self.frame_decoder(torch.cat((z_sample, f_sample.unsqueeze(1).expand(num_batch, step, -1)), dim=2))
+        f_sample_expand = f_sample.unsqueeze(1).expand(num_batch, step, -1)
+        x_recon         = self.frame_decoder(torch.cat((z_sample, f_sample_expand), dim=2))
         return  {
             "f_mean"         : f_mean,
             "f_logvar"       : f_logvar,

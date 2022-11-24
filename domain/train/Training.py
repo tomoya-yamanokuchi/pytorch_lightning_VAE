@@ -48,7 +48,7 @@ class Training:
                 config.model.name,
                 config.datamodule.name,
                 config.model.network.context_encoder.context_dim,
-                config.model.network.dynamical_state_encoder.state_dim,
+                config.model.network.motion_encoder.state_dim,
                 config.trainer.max_epochs,
                 datetime.datetime.now().strftime('%Y%m%d%H%M%S')
             ),

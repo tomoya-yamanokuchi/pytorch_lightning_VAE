@@ -11,7 +11,7 @@ from custom.layer.ConvUnitTranspose import ConvUnitTranspose
 from custom.layer.LinearUnit import LinearUnit
 
 
-class FrameDecoder(nn.Module):
+class FC_wih_Conv_FrameDecoder(nn.Module):
     def __init__(self,
                  in_dim      : int,
                  deconv_fc_out_dims : List[int],

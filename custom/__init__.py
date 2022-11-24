@@ -1,4 +1,5 @@
 from custom.layer.ConvUnit import ConvUnit
+from custom.layer.ConvEnd import ConvEnd
 from custom.layer.ConvUnitTranspose import ConvUnitTranspose
 from custom.layer.LinearUnit import LinearUnit
 from custom.layer.Reshape import Reshape

@@ -55,7 +55,8 @@ class LitContrastiveDisentangledSequentialVariationalAutoencoder(pl.LightningMod
         scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(
             optimizer = optimizer,
             eta_min   = 2e-4,
-            T_0       = (self.config.trainer.max_epochs + 1) // 2,
+            # T_0       = (self.config.trainer.max_epochs + 1) // 2, # originally: (opt.nEpoch+1)//2
+            T_0       = (100 + 1) // 2, # originally: (opt.nEpoch+1)//2
             T_mult    = 1
         )
         return [optimizer,], [scheduler,]

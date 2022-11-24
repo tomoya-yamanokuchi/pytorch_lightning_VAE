@@ -7,3 +7,10 @@ setup(
     packages    = find_packages(where='custom'),
     package_dir = {'': 'custom'},
 )
+
+
+'''
+Usage (in terminal):
+    python setup.py install --user
+
+'''

@@ -1,18 +1,18 @@
 from torch import nn
 
-class ConvUnit(nn.Module):
+class ConvEnd(nn.Module):
     def __init__(self, in_channels, out_channels):
-        super(ConvUnit, self).__init__()
+        super(ConvEnd, self).__init__()
         self.model = nn.Sequential(
             nn.Conv2d(
                 in_channels  = in_channels,
                 out_channels = out_channels,
                 kernel_size  = 4,
-                stride       = 2,
-                padding      = 1,
+                stride       = 1,
+                padding      = 0,
             ),
             nn.BatchNorm2d(out_channels),
-            nn.LeakyReLU(0.2, inplace=True),
+            nn.Tanh(),
         )
 
     def forward(self, x):

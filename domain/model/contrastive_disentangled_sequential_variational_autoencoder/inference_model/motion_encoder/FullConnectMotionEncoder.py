@@ -7,7 +7,7 @@ import numpy as np
 from custom.layer.LinearUnit import LinearUnit
 from custom.utility.reparameterize import reparameterize
 
-class DynamicalStateEncoder(nn.Module):
+class FullConnectMotionEncoder(nn.Module):
     def __init__(self,
                  in_dim           : int,
                  hidden_dim       : int,

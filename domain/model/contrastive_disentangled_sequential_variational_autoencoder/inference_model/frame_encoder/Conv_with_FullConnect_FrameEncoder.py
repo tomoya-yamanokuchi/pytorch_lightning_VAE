@@ -8,7 +8,7 @@ import copy
 from custom.layer.ConvUnit import ConvUnit
 from custom.layer.LinearUnit import LinearUnit
 
-class FrameEncoder(nn.Module):
+class Conv_with_FullConnect_FrameEncoder(nn.Module):
     def __init__(self,
                  in_channels      : int,
                  conv_out_channels: List[int],

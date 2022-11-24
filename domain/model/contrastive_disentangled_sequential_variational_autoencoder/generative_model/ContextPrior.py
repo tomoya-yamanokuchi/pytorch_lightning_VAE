@@ -11,3 +11,6 @@ class ContextPrior:
     def logvar(self, x):
         # 後でexp()の処理が入るのでここでは0
         return torch.zeros(self.context_dim).type_as(x)
+
+    def dist(self, x):
+        return self.mean(x), self.logvar(x)
