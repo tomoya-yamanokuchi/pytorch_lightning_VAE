@@ -9,6 +9,7 @@ from torch import Tensor
 from typing import List, Any
 import pytorch_lightning as pl
 from .ContrastiveDisentangledSequentialVariationalAutoencoder import ContrastiveDisentangledSequentialVariationalAutoencoder
+from .scheduler.SchedulerFactory import SchedulerFactory
 from .. import visualization
 
 import cv2
@@ -52,14 +53,9 @@ class LitContrastiveDisentangledSequentialVariationalAutoencoder(pl.LightningMod
             lr     = self.config.optimizer.lr,
             betas  = tuple(self.config.optimizer.betas)
         )
-        scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(
-            optimizer = optimizer,
-            eta_min   = 2e-4,
-            # T_0       = (self.config.trainer.max_epochs + 1) // 2, # originally: (opt.nEpoch+1)//2
-            T_0       = (100 + 1) // 2, # originally: (opt.nEpoch+1)//2
-            T_mult    = 1
-        )
-        return [optimizer,], [scheduler,]
+        scheduler = SchedulerFactory().create(**self.config.scheduler, optimizer=optimizer, max_epochs=self.config.trainer.max_epochs)
+        if scheduler is None: return optimizer
+        else                : return [optimizer,], [scheduler,]
 
 
     def training_step(self, batch, batch_idx):
