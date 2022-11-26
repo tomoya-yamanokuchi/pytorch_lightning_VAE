@@ -15,7 +15,7 @@ datamodule:
 
 logger:
   save_dir: "logs/"
-  name    : "C-DSVAE"
+  name    : "C-DSVAE2"
 
 experiment:
   manual_seed: 1265

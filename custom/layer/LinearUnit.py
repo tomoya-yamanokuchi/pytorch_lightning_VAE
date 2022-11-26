@@ -15,5 +15,11 @@ class LinearUnit(nn.Module):
                 nn.LeakyReLU(0.2),
             )
 
+        '''
+        context ベクトルの f_mean, f_logvaeを求めるのに，
+        LeakyReLUはあっていいのか？ f ~ N(mu, sigma)　なのに
+        '''
+
+
     def forward(self, x):
         return self.model(x)

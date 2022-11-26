@@ -9,7 +9,12 @@ class SchedulerFactory:
             scheduler = None
 
         elif name == "stepLR":
-            scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=max_epochs//2, gamma=0.5)
+            scheduler = optim.lr_scheduler.StepLR(
+                optimizer = optimizer,
+                # step_size = max_epochs//2,
+                step_size = 50, # per epoch
+                gamma     = 0.5,
+            )
 
         elif name == "CosineAnnealingWarmRestarts":
             scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(

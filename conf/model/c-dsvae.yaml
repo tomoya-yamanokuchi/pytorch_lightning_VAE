@@ -13,12 +13,12 @@ network:
 
   # Context Encoder
   context_encoder:
-    context_dim : 128
+    context_dim : 72
 
   # Motion Encoder
   motion_encoder:
     name       : "lstm"
-    state_dim  : 8
+    state_dim  : 7
 
   # Frame Decoder
   frame_decoder:
@@ -26,7 +26,7 @@ network:
 
   # DynamicsModel
   motion_prior:
-    state_dim  : 8
+    state_dim  : 7
     hidden_dim : 512
 
 

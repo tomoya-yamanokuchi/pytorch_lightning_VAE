@@ -124,7 +124,7 @@ class ContrastiveDisentangledSequentialVariationalAutoencoder(nn.Module):
         contrastive_loss_fx = self.contrastive_loss(results_dict["f_mean"], f_mean_aug)
         contrastive_loss_zx = self.contrastive_loss(results_dict["z_mean"].view(num_batch, -1), z_mean_aug.view(num_batch, -1))
 
-        mutual_info_fz      = self.mutual_information(
+        mutual_information_fz, (Hf, Hz, Hfz) = self.mutual_information(
             f_dist = (results_dict["f_mean"], results_dict["f_logvar"], results_dict["f_sample"]),
             z_dist = (results_dict["z_mean"], results_dict["z_logvar"], results_dict["z_sample"]),
         )
@@ -135,14 +135,36 @@ class ContrastiveDisentangledSequentialVariationalAutoencoder(nn.Module):
                 + self.weight.kld_dynamics          * kld_dynamics \
                 - self.weight.contrastive_loss_fx   * contrastive_loss_fx \
                 - self.weight.contrastive_loss_zx   * contrastive_loss_zx \
-                + self.weight.mutual_information_fz * mutual_info_fz
+                + self.weight.mutual_information_fz * mutual_information_fz
 
         return {
             'loss'                     : loss,
             'recon_loss'               : recon_loss,
-            'kld_context'              : kld_context,
-            'kld_dynamics'             : kld_dynamics,
-            'contrastive_loss_context' : contrastive_loss_fx,
-            'contrastive_loss_dynamics': contrastive_loss_zx,
-            'mutual_information_fz'    : mutual_info_fz
+
+            'kld/context'              : kld_context,
+            'kld/dynamics'             : kld_dynamics,
+
+            'mutual_information/fx' : contrastive_loss_fx,
+            'mutual_information/zx' : contrastive_loss_zx,
+            'mutual_information/fz' : mutual_information_fz,
+
+            'entropy/Hf'               : Hf,
+            'entropy/Hz'               : Hz,
+            'entropy/Hfz'              : Hfz,
+
+            'f_mean/f_mean.mean()'     : results_dict["f_mean"].mean(),
+            'f_mean/f_mean.min()'      : results_dict["f_mean"].min(),
+            'f_mean/f_mean.max()'      : results_dict["f_mean"].max(),
+
+            'z_mean/z_mean.mean()'     : results_dict["z_mean"].mean(),
+            'z_mean/z_mean.min()'      : results_dict["z_mean"].min(),
+            'z_mean/z_mean.max()'      : results_dict["z_mean"].max(),
+
+            'f_logvar/f_logvar.mean()' : results_dict["f_logvar"].mean(),
+            'f_logvar/f_logvar.min()'  : results_dict["f_logvar"].min(),
+            'f_logvar/f_logvar.max()'  : results_dict["f_logvar"].max(),
+
+            'z_logvar/z_logvar.mean()' : results_dict["z_logvar"].mean(),
+            'z_logvar/z_logvar.min()'  : results_dict["z_logvar"].min(),
+            'z_logvar/z_logvar.max()'  : results_dict["z_logvar"].max(),
         }

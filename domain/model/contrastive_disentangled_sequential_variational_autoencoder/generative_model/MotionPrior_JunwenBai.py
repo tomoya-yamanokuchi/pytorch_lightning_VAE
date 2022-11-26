@@ -5,7 +5,7 @@ from typing import List, Any
 from custom import reparameterize
 
 
-class MotionPrior(nn.Module):
+class MotionPrior_JunwenBai(nn.Module):
     def __init__(self,
                  state_dim  : int,
                  hidden_dim : int,
@@ -51,6 +51,5 @@ class MotionPrior(nn.Module):
                 z_out     = torch.cat((z_out, z_prior.unsqueeze(1)), dim=1)
                 z_means   = torch.cat((z_means, z_mean_t.unsqueeze(1)), dim=1)
                 z_logvars = torch.cat((z_logvars, z_logvar_t.unsqueeze(1)), dim=1)
-            # z_t = z_post[:,i,:]
-            z_t = z_prior
+            z_t = z_post[:,i,:]
         return z_means, z_logvars, z_out

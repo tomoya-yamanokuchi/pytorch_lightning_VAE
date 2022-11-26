@@ -15,3 +15,7 @@ def get_config(cfg: DictConfig) -> None:
     train.run()
 
 get_config()
+
+'''
+tensorboard --logdir /home/tomoya-y/workspace/pytorch_lightning_VAE/logs/C-DSVAE
+'''

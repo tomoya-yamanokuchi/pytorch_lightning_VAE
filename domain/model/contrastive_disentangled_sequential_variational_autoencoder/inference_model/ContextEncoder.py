@@ -15,8 +15,11 @@ class ContextEncoder(nn.Module):
                  **kwargs) -> None:
         super().__init__()
         self.lstm_hidden_dim = lstm_hidden_dim
-        self.mean            = LinearUnit(lstm_hidden_dim*2, context_dim, batchnorm=False)
-        self.logvar          = LinearUnit(lstm_hidden_dim*2, context_dim, batchnorm=False)
+        # self.mean            = LinearUnit(lstm_hidden_dim*2, context_dim, batchnorm=False)
+        # self.logvar          = LinearUnit(lstm_hidden_dim*2, context_dim, batchnorm=False)
+
+        self.mean            = nn.Linear(lstm_hidden_dim*2, context_dim)
+        self.logvar          = nn.Linear(lstm_hidden_dim*2, context_dim)
 
         # self.forward(Tensor(np.random.randn(32, 8, lstm_hidden_dim*2)))
         # import ipdb; ipdb.set_trace()

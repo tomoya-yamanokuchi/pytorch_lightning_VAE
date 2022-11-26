@@ -9,8 +9,9 @@ class VectorHeatmap:
         self.fig, self.ax = plt.subplots()
 
 
-    def pause_show(self, v, cmap='gray', interval: float=0.5):
-        plt.cla()
+    def pause_show(self, v, cmap='gray', interval: float=0.5, reset=True):
+        if reset:
+            self.fig, self.ax = plt.subplots()
         len_v = len(v.shape)
         w, h  = v.shape
 
