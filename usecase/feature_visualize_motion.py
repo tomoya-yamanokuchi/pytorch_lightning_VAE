@@ -3,7 +3,7 @@ import numpy as np
 import sys; import pathlib; p=pathlib.Path(); sys.path.append(str(p.parent.resolve()))
 import sys; import pathlib; p=pathlib.Path(); sys.path.append(str(p.parent.resolve()))
 from domain.test.TestModel import TestModel
-from domain.visualize.vector_heatmap import VectorHeatmap
+from custom.visualize.VectorHeatmap import VectorHeatmap
 
 
 log = "[c-dsvae]-[sprite_aug]-[dim_f=14]-[dim_z=7]-[500epoch]-[20221122171135]"
@@ -15,8 +15,10 @@ log = "[c-dsvae]-[sprite_aug]-[dim_f=14]-[dim_z=7]-[500epoch]-[20221123201940]"
 log = "[c-dsvae]-[sprite_aug]-[dim_f=128]-[dim_z=8]-[1000epoch]-[20221124031555]"
 
 log = "[c-dsvae]-[sprite_aug]-[dim_f=128]-[dim_z=8]-[500epoch]-[20221125102327]"
+
+log = "[c-dsvae]-[sprite_aug]-[dim_f=72]-[dim_z=7]-[500epoch]-[20221127035954]"
 # ----------------------------------------------------------------------------------
-model   = "C-DSVAE"
+model   = "C-DSVAE2"
 log_dir = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/{}/".format(model)
 test    = TestModel(
     config_dir  = log_dir + log,

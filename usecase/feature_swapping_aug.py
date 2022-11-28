@@ -18,8 +18,10 @@ from custom.visualize.VectorHeatmap import VectorHeatmap
 
 
 log = "[c-dsvae]-[sprite_aug]-[dim_f=72]-[dim_z=7]-[500epoch]-[20221127005444]"
+
+log = "[c-dsvae]-[sprite_aug]-[dim_f=72]-[dim_z=7]-[500epoch]-[20221127035954]"
 # ----------------------------------------------------------------------------------
-model   = "C-DSVAE"
+model   = "C-DSVAE2"
 log_dir = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/{}/".format(model)
 test    = TestModel(
     config_dir  = log_dir + log,

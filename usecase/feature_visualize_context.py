@@ -4,7 +4,7 @@ import torch
 import sys; import pathlib; p=pathlib.Path(); sys.path.append(str(p.parent.resolve()))
 import sys; import pathlib; p=pathlib.Path(); sys.path.append(str(p.parent.resolve()))
 from domain.test.TestModel import TestModel
-from domain.visualize.vector_heatmap import VectorHeatmap
+from custom.visualize.VectorHeatmap import VectorHeatmap
 from custom.utility.image_converter import torch2numpy
 
 
@@ -16,8 +16,11 @@ log = "[c-dsvae]-[sprite_aug]-[dim_f=14]-[dim_z=7]-[500epoch]-[20221123204704]"
 log = "[c-dsvae]-[sprite_aug]-[dim_f=128]-[dim_z=8]-[1000epoch]-[20221124031555]"
 
 log = "[c-dsvae]-[sprite_aug]-[dim_f=128]-[dim_z=8]-[500epoch]-[20221125102327]"
+log = "[c-dsvae]-[sprite_aug]-[dim_f=72]-[dim_z=7]-[500epoch]-[20221127005444]"
+
+log = "[c-dsvae]-[sprite_aug]-[dim_f=72]-[dim_z=7]-[500epoch]-[20221127035954]"
 # ----------------------------------------------------------------------------------
-model   = "C-DSVAE"
+model   = "C-DSVAE2"
 log_dir = "/home/tomoya-y/workspace/pytorch_lightning_VAE/logs/{}/".format(model)
 test    = TestModel(
     config_dir  = log_dir + log,
@@ -28,7 +31,7 @@ model      = test.load_model()
 dataloader = test.load_dataloader()
 # ----------------------------------------------------------------------------------
 import cv2
-cv2.namedWindow('img', cv2.WINDOW_NORMAL)
+# cv2.namedWindow('img', cv2.WINDOW_NORMAL)
 
 vectorHeatmap = VectorHeatmap()
 for index, img_tuple in dataloader:
@@ -48,8 +51,8 @@ for index, img_tuple in dataloader:
     images = torch.concat(torch.split(images, 1, dim=0), dim=-1).squeeze(0)
     images = torch2numpy(images)
     images = cv2.cvtColor(images, cv2.COLOR_RGB2BGR)
-    cv2.imshow("img", images)
-    cv2.waitKey(10)
+    # cv2.imshow("ddd", images)
+    # cv2.waitKey(10)
     # import ipdb; ipdb.set_trace()
     vectorHeatmap.pause_show(np.concatenate(f, axis=0), interval=1)
 
